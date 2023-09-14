@@ -1,0 +1,12 @@
+extends ../main
+block variables
+    - var pageTitle = 'comments'
+block content
+    p.alert.alert-info.w-100.text-center Here is the content that will have comments on it. It can be product, article, or anything 
+    .container.mt-3.d-flex.flex-wrap.justify-content-center.gap-3
+        each content in contents
+            -if(!content.hidden || user?.isAdmin || user?.isEditor || String(user?._id) == content.author.id)//- prevent show the content if it is set to be hidden or the user is admin, editor, author, or the content author
+                .card.text-center(style="width: 18rem; cursor:pointer", onclick="openContent('"+content.id+"')")
+                    .card-body
+                        h3.card-text.content-name.text-primary= content.name
+                        p= "comments: "+ content.commentsNum

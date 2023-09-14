@@ -1,0 +1,143 @@
+.comments.mb-3
+    h3.text-primary Comments
+    if(content.comments.length)
+        each comment in content.comments
+            .comment.p-2.w-75(id= "d"+comment._id)
+                .user-details.d-flex.gap-2.align-items-center
+                    img.img-icon.rounded-circle(src=comment.userImg? comment.userImg : "/user.jpg")
+                    .details
+                        if(comment.userIsAuthz)
+                            span.username.btn-primary.p-1.ps-2.pe-2.rounded
+                                h5.d-inline.m-0= user? String(user._id)==comment.userID?"Me":comment.username:comment.username
+                                i.fa-solid.fa-check.ms-2
+                            -if(content.author.id == comment.userID)
+                                p.author-mark.m-0.ms-2.d-inline.text-secondary.fw-bold "The Author"
+                        else
+                            h5.username.m-0= user? String(user._id)==comment.userID?"Me":comment.username:comment.username
+                        p.m-0.comment-time.m-0(data-timestamp=comment.timestamp)
+                .user-comment.mt-3
+                    .content
+                        p.bg-light.p-3.m-0.border.rounded(style="white-space: pre-wrap;")= comment.body
+                    .options.mt-2
+                        if(comment.userID)
+                            if(user)
+                                -if(String(comment.userID) === String(user._id))
+                                    .edit-comment.d-none.mb-3
+                                        textarea(class='form-control mt-3 mb-3' name='body' placeholder='Enter comment' rows='2' required)= comment.body
+                                        button(class='btn btn-sm btn-primary me-3' onclick="saveCommentEdit(this)" value={
+                                            commentID:comment._id,
+                                            body: comment.body
+                                        }) Edit
+                                    span.likes-counter.me-2.text-primary= comment.likes.length
+                                    i.fa-regular.fa-thumbs-up.fs-5.like-comment.text-primary.me-3(onclick="refuseAction(this, 'You wrote this comment')")
+                                    span.dislikes-counter.me-2.text-danger= comment.dislikes.length
+                                    i.fa-regular.fa-thumbs-down.fs-5.dislike-comment.text-danger.me-3(onclick="refuseAction(this, 'You wrote this comment')")
+                                    span.author-react
+                                        if(comment.loved)
+                                            span.btn-danger.ps-2.pe-2.pt-1.pb-1.me-3.rounded-pill
+                                                i.fa-solid.fa-heart.text-white.text-danger.me-1
+                                                img.mb-1.img-icon.rounded-circle(style="width:20px; height:20px", src=content.author.img)
+                                    i.fa-regular.fa-pen-to-square.fs-5.text-success.me-3(onclick="openEditForm(this)")
+                                    i.fa-solid.fa-trash.fs-5.text-danger.me-3(onclick="deleteComment(this)" data-values={
+                                        commentID:comment._id,
+                                        commentUserID: comment.userID
+                                    })
+                                -else
+                                    if(user.isAdmin || user.isEditor || user.isAuthor)
+                                        if(user._id == content.author.id)
+                                            span.likes-counter.me-2.text-primary= comment.likes.length
+                                            i.fa-regular.fa-thumbs-up.fs-5.like-comment.text-primary.me-3(onclick="refuseAction(this, 'The Content Author can only react with love')")
+                                            
+                                            span.dislikes-counter.me-2.text-danger= comment.dislikes.length
+                                            i.fa-regular.fa-thumbs-down.fs-5.dislike-comment.text-danger.me-3(onclick="refuseAction(this, 'The Content Author can only react with love')")
+                                            
+                                            i.fa-heart.fs-5.text-danger.me-3(class=comment.loved?"fa-solid":"fa-regular", onclick="loveComment(this)", data-values={
+                                                commentID:comment._id,
+                                                authorImg: content.author.img,
+                                                addLove: !comment.loved
+                                            })
+                                        else 
+                                            span.likes-counter.me-2.text-primary= comment.likes.length
+                                            i.fa-thumbs-up.fs-5.like-comment.text-primary.me-3(class=comment.likes.includes(String(user._id))? "fa-solid":"fa-regular", onclick="reactTheComment(this)", data-values={
+                                                commentID: comment._id,
+                                                react: "like",
+                                            })
+                                            span.dislikes-counter.me-2.text-danger= comment.dislikes.length
+                                            i.fa-thumbs-down.fs-5.dislike-comment.text-danger.me-3(class=comment.dislikes.includes(String(user._id))? "fa-solid":"fa-regular", onclick="reactTheComment(this)", data-values={
+                                                commentID: comment._id,
+                                                react: "dislike",
+                                            })
+                                            if(comment.loved)
+                                                span.btn-danger.ps-2.pe-2.pt-1.pb-1.me-3.rounded-pill
+                                                    i.fa-solid.fa-heart.text-white.text-danger.me-1
+                                                    img.mb-1.img-icon.rounded-circle(style="width:20px; height:20px" src=content.author.img)
+                                        
+                                        if(!user.isAuthor || (user.isAuthor && user._id == content.author.id))
+                                            i.fa-solid.fa-trash.fs-5.text-danger.me-3(onclick="deleteComment(this)" data-values={
+                                                commentID:comment._id,
+                                                commentUserID: comment.userID
+                                            })
+                                    else
+                                        span.likes-counter.me-2.text-primary= comment.likes.length
+                                        i.fa-thumbs-up.fs-5.like-comment.text-primary.me-3(class=comment.likes.includes(String(user._id))? "fa-solid":"fa-regular", onclick="reactTheComment(this)" data-values={
+                                            commentID: comment._id,
+                                            react: "like",
+                                        })
+                                        span.dislikes-counter.me-2.text-danger= comment.dislikes.length
+                                        i.fa-thumbs-down.fs-5.dislike-comment.text-danger.me-3(class=comment.dislikes.includes(String(user._id))? "fa-solid":"fa-regular", onclick="reactTheComment(this)" data-values={
+                                            commentID: comment._id,
+                                            react: "dislike",
+                                        })
+                                        span.author-react
+                                            if(comment.loved)
+                                                span.btn-danger.ps-2.pe-2.pt-1.pb-1.me-3.rounded-pill
+                                                    i.fa-solid.fa-heart.text-white.text-danger.me-1
+                                                    img.mb-1.icon-img.rounded-pill(style="width:20px; height:20px" src=content.author.img)
+                                i.fa-solid.fa-reply.fs-5.text-secondary(
+                                    data-values={
+                                        commentID: comment._id,
+                                        commentOwnerID: comment.userID,
+                                        commentOwnerName: comment.username
+                                    } 
+                                    onclick="replyComment(this)"
+                                )
+                            else
+                                span.likes-counter.me-2.text-primary= comment.likes.length
+                                i.fa-regular.fa-thumbs-up.fs-5.like-comment.text-primary.me-3(onclick="refuseAction(this, 'login to react')")
+                                span.dislikes-counter.me-2.text-danger= comment.dislikes.length
+                                i.fa-regular.fa-thumbs-down.fs-5.dislike-comment.text-danger.me-3(onclick="refuseAction(this, 'login to react')")
+                                i.fa-solid.fa-reply.fs-5.text-secondary.me-3(onclick="refuseAction(this, 'login to reply')")
+                                span.author-react
+                                    if(comment.loved)
+                                        span.btn-danger.ps-2.pe-2.pt-1.pb-1.me-3.rounded-pill
+                                            i.fa-solid.fa-heart.text-white.text-danger.me-1
+                                            img.mb-1.img-icon.rounded-circle(style="width:20px; height:20px" src=content.author.img)
+            if(comment.repliesNum != "0")
+                .comment-replies.w-75.ms-2.mb-3
+                    .collapse.replies.ps-3.pt-3.pb-3.border-start.border-2.border-primary(id="comment"+comment._id+"replies")
+                        .spinner-border.text-primary.ms-3(role="status")
+                            span.visually-hidden Loading...
+                    a.mb-3.text-decoration-none(data-bs-toggle="collapse" 
+                        href="#"+"comment"+comment._id+"replies"
+                        onclick=`getReplies(this, "${comment._id}", "")`
+                        data-replies-num= comment.repliesNum
+                    )= `show (${comment.repliesNum}) replies`
+        if(content.commentsNum > content.comments.length)
+            .show-comments.text-center.fs-5
+                a.text-decoration-none(onclick="getMoreComments(this, "+content.comments.length+")") show more
+    else
+        .no-comment.alert.alert-secondary.text-center.m-0 no comments yet
+form(class='write-comment alert alert-secondary m-0 text-center position-sticky bottom-0' method='post' action='/content/comments')
+    if(user)
+        .user-details.d-flex.gap-2.align-items-center
+            img.mb-2.img-icon.rounded-circle(src=user.img)
+            if(user.isAdmin || user.isEditor || user.isAuthor)
+                span.btn-primary.ps-2.pe-2.rounded
+                    h5.d-inline.m-0= user.name
+                    i.fa-solid.fa-check.ms-2
+            else
+                h5= user.name
+        textarea(class='form-control mb-3' name='body' placeholder='Enter comment' rows='5' required)
+        button(class='btn btn-primary' type='submit' name='contentID' value= content._id) Send
+    else 
+        h5.without-account login first

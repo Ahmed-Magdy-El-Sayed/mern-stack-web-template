@@ -1,0 +1,20 @@
+extends ../main
+block variables
+    - var pageTitle = 'Content Review'
+block content
+    if(setReviewMsg)
+        .alert.alert-success.w-100.text-center= setReviewMsg
+    .container.mt-3.d-flex.flex-wrap.justify-content-center.gap-3
+        if(contents.length)
+            each content in contents
+                .card.text-center(style="width: 18rem; cursor:pointer", onclick="openContent('"+content.id+"')")
+                    .card-body
+                        h3.card-text.text-primary= content.name
+                        p.m-0 author: 
+                        span.d-flex.gap-2.justify-content-center.align-items-center
+                            img.img-icon.rounded-circle(src=content.author.img, alt="author img")
+                            h6.m-0= content.author.name
+                                
+                        //- add the you content data here
+        else   
+            h3.alert.alert-secondary.w-100.text-center No content to review

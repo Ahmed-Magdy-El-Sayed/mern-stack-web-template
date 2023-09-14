@@ -1,0 +1,50 @@
+extends ../main
+block variables
+    - var pageTitle = 'Accounts Control'
+block content
+    if(msg)
+        .alert.alert-success.text-center= msg
+    input.form-control.w-50.m-auto.mt-5(type="search", name="accountName", placeholder="Search accounts by name", onkeyup="getMatchedAccounts(this.value)")
+    .search-result-container.mt-3.d-flex.flex-wrap.justify-content-center.gap-2
+    .container.mt-3
+        h3 Users
+        if(accounts.users.length)
+            .d-flex.flex-wrap.justify-content-center.gap-2
+                each account in accounts.users
+                    include ../accountControlCard
+            .show-comments.text-center.fs-5
+                a.text-decoration-none(onclick="getMoreAccounts(this, 'users')") show more
+        else
+            p.alert.alert-secondary.w-100.text-center= "No users yet."
+        hr
+        h3 Admins
+        if(accounts.admins.length)
+            .d-flex.flex-wrap.justify-content-center.gap-2
+                each account in accounts.admins
+                    include ../accountControlCard
+            .show-comments.text-center.fs-5
+                a.text-decoration-none(onclick="getMoreAccounts(this, 'admins')") show more
+        else
+            p.alert.alert-secondary.w-100.text-center= "No admins except you."
+        hr
+        h3 Editors
+        if(accounts.editors.length)
+            .d-flex.flex-wrap.justify-content-center.gap-2
+                each account in accounts.editors
+                        include ../accountControlCard
+            .show-comments.text-center.fs-5
+                a.text-decoration-none(onclick="getMoreAccounts(this, 'editors')") show more
+        else
+            p.alert.alert-secondary.w-100.text-center= "No editors yet."
+        hr
+        h3 Authors
+        if(accounts.authors.length)
+            .d-flex.flex-wrap.justify-content-center.gap-
+                each account in accounts.authors
+                    include ../accountControlCard
+            .show-comments.text-center.fs-5
+                a.text-decoration-none(onclick="getMoreAccounts(this, 'authors')") show more
+        else
+            p.alert.alert-secondary.w-100.text-center= "No authors yet."
+block js 
+    script(src="/js/accountControl.js") 

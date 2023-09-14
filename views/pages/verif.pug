@@ -1,0 +1,19 @@
+extends ./main
+block PageTitle
+    title= 'verification'
+block content
+    .text-center.mt-5
+        h1.mb-3.text-primary verify your email
+        p We send verification code to your email.
+            br
+            | if you didn't receive it 
+            a(href="/verify/resend-email/"+id) Click Here 
+        form.needs-validation(method="post" action="/verify")
+            input( type='text' name='id' value=id hidden)
+            input.form-control.w-25.m-auto(type='text' name='code' placeholder='enter your verification code here' required)
+            .time-reminded.text-danger(data-expiration= expiration)
+            button.form-validation.btn.btn-primary.mt-3.mb-3(type="submit") Verify
+        if(err)
+            .alert.alert-danger.w-25.m-auto= err
+block js 
+    script(src="/js/verif.js") 
