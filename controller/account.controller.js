@@ -1,6 +1,7 @@
 const { 
-    createUser, authUser, getFrist10Accounts,
-    getAccountsByRole, getAccountsByName, banUser, unbanUser, warningUser, 
+    createUser, authUser, createResetCode, resetAccountPass, 
+    getFrist10Accounts, getAccountsByRole, getAccountsByName, 
+    banUser, unbanUser, warningUser, 
     changeUserAuthz, updateProfile, deleteUser, 
     clearUserNotif, deleteUserByAdmin, addNotif, updateNotif,
     getReviewersNotifs, markNotifReaded
@@ -85,6 +86,47 @@ const checkUser = async (req, res) =>{//log in the user
                 }
             }
         }
+    })
+}
+
+let resetPageAlert;
+const getForgetPassPage = (req, res)=>{
+    res.render('forgetPass', {alert: resetPageAlert})
+    resetPageAlert = null
+}
+const sendRestEmail =(req, res)=>{
+    const email = req.body.email
+    createResetCode(email).then((result)=>{
+        if(typeof result == "string"){
+            resetPageAlert = {msg: result, type: "danger"}
+            res.redirect(req.get('Referrer'))
+        }
+        else{
+            sendEmailNotification(email, {
+                title: "Reset Your Account Password",
+                content: `
+                <h4>If you forgot your password <a href="${req.protocol + '://' + req.get('host')}/account/reset/${result.id}/${result.resetCode}">click here</a> to reset it</h4>
+                `
+            })
+            resetPageAlert = {msg: "The reset link sent to your email", type:"success"}
+            res.redirect(req.get('Referrer'))
+        }
+    }).catch(err=>{
+        console.error(err)
+        res.status(500).render("error",{error:"Internal server error"})
+    })
+}
+
+const getResetPage = (req, res)=>{
+    res.render("resetPass", {...req.params})
+}
+
+const resetPass= (req, res)=>{
+    resetAccountPass(req.body).then(result=>{
+        result?
+            res.redirect("/account/login")
+        :
+            res.status(400).render("error", {error: "Bad Request! Try Again"})
     })
 }
 /* end the functions for login page */
@@ -299,8 +341,9 @@ const notifyReviewerWithoutRepeat = (notifMsg, data)=>{// notify the admins and 
 }
 
 const updateSessionNotif = (req, res)=>{//for online users, save the notification to the session. so no need to call the data from database
-    req.session.user.notifs.unshift(req.body.notif)
-    req.session.user.notifsNotReaded++
+    const user =req.session.user;
+    user.notifs = req.body.notifs
+    user.notifsNotReaded++
     res.end()
 }
 
@@ -314,11 +357,16 @@ const clearNotif = (req, res)=>{// if user click on clear notification option in
 }
 
 const readNotif = (req, res)=>{//when open the notifications
-    markNotifReaded(req.session.user._id).then(()=>{
-        const readedNum = req.session.user.notifs.length - req.session.user.notifsNotReaded
-        const editedNotif = req.session.user.notifs.splice(-readedNum).map(notif=>{notif.isReaded = true; return notif})
-        req.session.user.notifsNotReaded = 0
-        req.session.user.notifs.push(...editedNotif)
+    const user = req.session.user;
+    markNotifReaded(user._id).then(()=>{
+        const readedNum = user.notifs.length - user.notifsNotReaded
+        const editedNotif = user.notifs.splice(-readedNum).map(notif=>{notif.isReaded = true; return notif})
+        user.notifsNotReaded = 0
+        user.notifs= user.notifs.map(notif=>{
+            notif.isReaded=true;
+            return notif
+        })
+        user.notifs.push(...editedNotif)
         res.status(201).end()
     }).catch(()=>{
         res.status(500).end("internal server error")
@@ -328,6 +376,8 @@ const readNotif = (req, res)=>{//when open the notifications
 
 module.exports={
     getSignup, getLogin, 
+    getForgetPassPage, sendRestEmail,
+    getResetPage, resetPass,
     postUser, checkUser,
     changeProfile, logout, 
     deleteAccount, getAccounts, getMoreAccounts, 

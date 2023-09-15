@@ -1,12 +1,14 @@
 const mongoose = require('mongoose');
 const dbConnect = require('./dbConnect')
 const bcrypt = require("bcrypt")
+const crypto = require("crypto")
 
 const uSchema = new mongoose.Schema({
     name: String,
     email: String,
     img:{type: String, default: "/user.jpg"},
     password: String,
+    passwordResetCode: String,
     verification: {
         code: String,
         expire: String
@@ -27,7 +29,8 @@ const usersModel = new mongoose.model('user',uSchema)
 
 module.exports ={
     createUser: async data =>{//for signup 
-        data.name = data.name.replaceAll(" ","")
+        if(!(/^[0-9a-zA-Z_]{3,}$/g.test(data.name)))
+            return "The name should be 3 or more of numbers, upper or lower characters, or underscore only"
         await bcrypt.hash(data.password, 10).then( val=>{
             data.password = val;
             hashed = true;
@@ -58,12 +61,17 @@ module.exports ={
         let user; 
         try {
             return dbConnect(async ()=>{
-                user = await usersModel.findOne({ name: data.name })
-                if(!user) return "there is no account match this name"
+                if(data.nameOrEmail.includes("@"))
+                    user = await usersModel.findOne({ email: data.nameOrEmail })
+                else
+                    user = await usersModel.findOne({ name: data.nameOrEmail })
+                if(!user) return "there is no account match this name/email"
                 else {
                     return await bcrypt.compare(data.password, user.password)// check the password
                     .then(async valid =>{
-                        if(!valid) return "email and password are not matched"
+                        if(!valid) return "name/email and password are not matched"
+                        if(user.passwordResetCode)// if the user made request to reset password, then remember it
+                            await usersModel.findByIdAndUpdate(user._id, {$set:{passwordResetCode: null}})
                         delete user.password;
                         if(user.verification?.code){// check if the email is verified
                             // if it is not verified
@@ -102,6 +110,48 @@ module.exports ={
                         }
                     })
                 }
+            })
+        } catch (err) {
+            throw err
+        }
+    },
+    createResetCode: async email=>{
+        try {
+            return await dbConnect(async ()=>{
+                const resetCode = crypto.randomBytes(6).toString('hex');
+                return await usersModel.findOneAndUpdate(
+                    {email}, 
+                    {$set:{passwordResetCode: resetCode}}, 
+                    {select: {_id:1}}
+                ).then( account=>{
+                    if(!account)
+                        return "There is no account match this email"
+                    return {
+                        id: account._id,
+                        resetCode: resetCode
+                    }
+                })
+            })
+        } catch (err) {
+            throw err
+        }
+    },
+    resetAccountPass: async data=>{
+        try {
+            return await dbConnect(async ()=>{
+                return await usersModel.findOne({_id: data.id, passwordResetCode: data.resetCode}, {select: {_id: 1}}).then(async account=>{
+                    if(!account)
+                        return false
+                    
+                    return await bcrypt.hash(data.password, 10).then(async val=>{
+                        return await usersModel.findByIdAndUpdate(data.id, {
+                            $set:{
+                                password: val,
+                                passwordResetCode: null
+                            }
+                        }).then(()=>true)
+                    })
+                })
             })
         } catch (err) {
             throw err

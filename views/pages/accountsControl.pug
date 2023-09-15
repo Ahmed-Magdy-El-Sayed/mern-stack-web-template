@@ -2,8 +2,6 @@ extends ../main
 block variables
     - var pageTitle = 'Accounts Control'
 block content
-    if(msg)
-        .alert.alert-success.text-center= msg
     input.form-control.w-50.m-auto.mt-5(type="search", name="accountName", placeholder="Search accounts by name", onkeyup="getMatchedAccounts(this.value)")
     .search-result-container.mt-3.d-flex.flex-wrap.justify-content-center.gap-2
     .container.mt-3

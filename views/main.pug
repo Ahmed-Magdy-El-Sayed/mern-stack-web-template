@@ -37,13 +37,8 @@ html
                         .dropdown.notif.me-3
                             i.fa-regular.fa-bell.fs-5.text-white.position-relative.icon(data-bs-toggle='dropdown', onclick="readNotif(this)")
                                 span.position-absolute.top-0.start-100.translate-middle.badge.rounded-circle.bg-danger.p-1(class=user.notifsNotReaded?"":"d-none", style="font-size: 1px;")= user.notifsNotReaded
-                            ul.dropdown-menu.end-0.text-center.notif-content(style="left: unset; width: 40vw;")
-                                -if(user.notifs?.length)
-                                    each notif in user.notifs
-                                        li.mb-2: a.text-decoration-none(class=notif.isReaded? "text-secondary" : "text-black" ,href= notif.href)= notif.msg 
-                                    a.text-primary.text-decoration-none(onclick="clearNotif(this)") Clear Notifications
-                                -else
-                                    p No notifications
+                            ul.dropdown-menu.end-0.text-center.notif-content(style="left: unset; width: 40vw; max-height:50vh; overflow-y: overlay;")
+                                p No notifications
 
                         .dropdown.setting
                             img.dropdown-toggle.img-icon.rounded-circle(src=user.img, data-bs-toggle='dropdown', alt="")

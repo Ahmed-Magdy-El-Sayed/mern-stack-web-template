@@ -107,13 +107,19 @@ const approveContent = (req, res)=>{
     if(!req.body.contentID.match(/^[0-9a-fA-F]{24}$/))
         return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
     setContentApproved(req.body).then( data=>{
+        if(!data){
+            res.status(500).render("error", {error: "Internal server error"})
+            return null
+        }
         setReviewMsg = "The content approved successfully"
         res.status(201).redirect("/content/review")
         sendEmailNotification(
             data.email, 
             {
                 title:"Your Content Is Approved", 
-                content:`<p>${data.notif.msg} <a href='${req.protocol + '://' + req.get('host')}${data.notif.href}'>click here</a> to go to the content</p>`
+                content:`<p>${data.notif.msg}
+                <a href='${req.protocol + '://' + req.get('host')}${data.notif.href}'>click here</a> to go to the content
+                </p>`
             }
         )
     }).catch(err=>{
@@ -126,6 +132,10 @@ const rejectContent = (req, res)=>{
     if(!req.body.contentID.match(/^[0-9a-fA-F]{24}$/))
         return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
     setContentRejected(req.body).then( data=>{
+        if(!data){
+            res.status(500).render("error", {error: "Internal server error"})
+            return null
+        }
         setReviewMsg = "The content rejected successfully"
         res.status(201).redirect("/content/review")
         sendEmailNotification(
@@ -133,8 +143,9 @@ const rejectContent = (req, res)=>{
             {
                 title:"Your Content Is Rejected", 
                 content:`
-                <p>${data.notif.msg}</p>
+                <p>${data.notif.msg}
                 <a href='${req.protocol + '://' + req.get('host')}${data.notif.href}'>click here</a> to go to content page
+                </p>
                 `
             }
         )

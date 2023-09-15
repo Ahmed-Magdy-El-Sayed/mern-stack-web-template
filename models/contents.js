@@ -114,6 +114,7 @@ module.exports = {
                 const content = await contentModel.findByIdAndUpdate(data.contentID, {$set:{
                     isUnderReview: false, 
                 }},{select:{name:1}})
+                if(!content) return false
                 const notif = {msg: `Your content ${content.name} was approved and added to the website content`, href:"/content/id/"+String(content._id)}
                 const email = await addNotif({userID: data.authorID, notif})// to notify the author
                 return{email, notif}
@@ -126,6 +127,7 @@ module.exports = {
         try{
             return dbConnect(async ()=>{
                 const content = await contentModel.findByIdAndDelete(data.contentID, {select:{name:1}})
+                if(!content) return false
                 const notif = {msg: `Your content ${content.name} was rejected for: "${data.reason}"`, href:"/content/my-content"}
                 const email =  await addNotif({userID: data.authorID, notif})// to notify the author
                 return {email, notif}

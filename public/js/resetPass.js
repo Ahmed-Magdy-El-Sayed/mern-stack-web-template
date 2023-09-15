@@ -1,6 +1,6 @@
 const passwordFeadback = document.querySelector(".password-container .invalid-feedback.main-password")
 const repeatedFeedback = document.querySelector(".password-container .invalid-feedback.repeated-password")
-const repeatPasswordField = document.querySelector(".signup .repeat-pass")
+const repeatPasswordField = document.querySelector(".reset-pass .repeat-pass")
 
 document.querySelector("input[type='password']").onkeyup = e=>{
     repeatPasswordField.pattern = e.target.value;
@@ -10,6 +10,6 @@ document.querySelector("input[type='password']").onkeyup = e=>{
     else passwordFeadback.innerText = "password should be at least 8 or more characters"
 }
 
-document.querySelector('.signup .btn').onclick=()=>{
-    document.querySelector('.signup').classList.add('was-validated');
-}
+// document.querySelector('.reset-pass .btn').onclick=()=>{
+//     document.querySelector('.reset-pass').classList.add('was-validated');
+// }

@@ -1,6 +1,7 @@
 const socket = io();
 const user = document.querySelector(".user").dataset.value
 const me = user? JSON.parse(user) : null
+delete user
 
 document.querySelector(".user").remove()
 
@@ -16,29 +17,36 @@ if(me && !me.isAdmine && !me.isEditor)
 const applyTheNotify = notif=>{//appear the new notification to the user
     const notifNum = document.querySelector(".notif .icon span");
     const content = document.querySelector(".notif .notif-content");
+
+    me.notifs.unshift(notif)
+
     notifNum.innerHTML = parseInt(notifNum.innerHTML) + 1;
-    if(content.children.length-1)//if their is old notification
-        content.insertAdjacentHTML("afterbegin",`
-        <li class="mb-2"> <a class="text-dark text-decoration-none" href="${notif.href}">${notif.msg}</a> </li>
-        `)
-    else{//their is on notification
-        content.innerHTML = `
-        <li class="mb-2"> <a class="text-dark text-decoration-none" href="${notif.href}">${notif.msg}</a> </li>
-        `
-    }
     notifNum.classList.remove("d-none")// appear the new notification icon (that contain the number of new notifications)
     fetch("/account/notif/update",{//save the notification in user session
         method:"post",
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({notif})
+        body: JSON.stringify({notifs: me.notifs})
     })
+
+    if(content.classList.contains("show")){
+        if(content.children.length-1)//if there is old notification
+            content.insertAdjacentHTML("afterbegin",`
+            <li class="mb-2"> <a class="text-dark text-decoration-none" href="${notif.href}">${notif.msg}</a> </li>
+            `)
+        else{//their is on notification
+            content.innerHTML = `
+            <li class="mb-2"> <a class="text-dark text-decoration-none" href="${notif.href}">${notif.msg}</a> </li>
+            `
+        }
+    }
 }
 
 socket.on("noify", applyTheNotify)
 
 socket.on("approveContent", (contentID, contentName)=>{//notify the user that his content is approved
     const notif = {msg:"The "+contentName+" content was approved and added to the website content",
-        href:"/content/my-content"
+        href:"/content/my-content",
+        num:1
     }
     
     applyTheNotify(notif)
@@ -60,7 +68,8 @@ socket.on("approveContent", (contentID, contentName)=>{//notify the user that hi
 
 socket.on("rejectContent", (contentID, contentName, reason)=>{//notify the user that his content is rejected
     const notif = {msg:`The ${contentName} content was rejected for: "${reason}"`,
-        href:"/content/my-content"
+        href:"/content/my-content",
+        num:1
     }
 
     applyTheNotify(notif)
@@ -131,7 +140,8 @@ if(document.querySelector(".modal-body .faild-edit")){ //for update profile moda
 }
 
 
-const clearNotif= target=>{ // when user click om clear notifications in the notifications section
+const clearNotif= target=>{ // when user click on clear notifications in the notifications section
+    me.notifs = []
     fetch("/account/notif/clear", {method:"post"}).then(res=>{
         if(res.status === 201) target.parentElement.innerHTML = "<p> No notifications </p>"
         else throw res.body;
@@ -139,18 +149,37 @@ const clearNotif= target=>{ // when user click om clear notifications in the not
         console.error(err)
     })
 }
-
+let notifOpened = false
 const readNotif= target=>{ // when user open the notifications
-    if(parseInt(target.firstChild.innerText)){
-        fetch("/account/notif/read", {method:"post"}).then(res=>{
-            if(res.status === 201){
-                target.firstChild.classList.add("d-none")
-                target.firstChild.innerHTML="0"
-            } 
-            else throw res.body;
-        }).catch(err=>{
-            console.error(err)
-        })
+    const notifContent = document.querySelector(".notif .notif-content")
+    notifOpened = !notifOpened;
+    if(notifOpened && me.notifs.length){
+        notifContent.innerHTML = ""
+        me.notifs.forEach(notif=>{
+            notifContent.innerHTML += `
+            <li class="mb-2">
+                <a class="text-decoration-none ${notif.isReaded? "text-secondary" : "text-black"}" href="${notif.href}"> ${notif.msg} </a>
+                ${!notif.isReaded?
+                    `<span class="rounded-circle bg-primary text-white p-1 ps-2 pe-2 fs-6"> ${notif.num}</span>` :""
+                }
+            </li>`
+            })    
+        notifContent.innerHTML += `
+            <a class="text-primary text-decoration-none" onclick="clearNotif(this)"> Clear Notifications </a>
+        `
+        if(parseInt(target.firstChild.innerText)){//if there is new notification --> mark the notifications readed in te session and remove the badge on the notif icon
+            fetch("/account/notif/read", {method:"post"}).then(res=>{
+                if(res.status === 201){
+                    target.firstChild.classList.add("d-none")
+                    target.firstChild.innerHTML="0"
+                } 
+                else throw res.body;
+            }).catch(err=>{
+                console.error(err)
+            })
+        }
+    }else if(me.notifs.length){
+        me.notifs=me.notifs.map(notif=>{notif.isReaded=true; return notif});
     }
 }
 

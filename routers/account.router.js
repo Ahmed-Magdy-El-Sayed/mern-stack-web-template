@@ -4,8 +4,10 @@ const multer = require('multer');
 
 const {
     getAccounts, getMoreAccounts, 
-    getMatchedAccounts,
-    getSignup, getLogin, 
+    getMatchedAccounts, getSignup, 
+    getLogin, getForgetPassPage,
+    sendRestEmail, getResetPage,
+    resetPass, 
     deleteAccount, changeProfile, 
     changeAuthz, updateSessionNotif,
     clearNotif, readNotif, 
@@ -22,6 +24,10 @@ router.get('/signup', isLoggedOut, getSignup)
 router.post('/signup', postUser)
 
 router.get('/login', isLoggedOut, getLogin)
+router.get('/password-forgot', getForgetPassPage)
+router.post('/password-forgot/send-email', sendRestEmail)
+router.get('/reset/:id/:resetCode', getResetPage)
+router.post('/password-reset', resetPass)
 router.post('/login', checkUser)
 
 router.post('/change-profile', multer({
