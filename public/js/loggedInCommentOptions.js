@@ -86,29 +86,29 @@ const replyComment = target =>{//onclick on reply icon in the buttom of comment/
         replyFormOpened[replyOnID]=true
         data.contentID = contentID;
         target.parentElement.innerHTML += `
-        <form class='reply-comment m-0 mt-2 alert alert-secondary' method='post' action='/content/replies/add' onsubmit="addReply(event)"">
-                <span class="btn btn-danger fw-bold rounded-pill p-0 ps-2 pe-2 me-3 position-absolute end-0" onclick="closeReply(this)">X</span>
-                <div class="user-details mb-2 d-flex gap-2 align-items-center">
-                    <img class="img-icon rounded-circle" src='${me.img}'>
-                    ${
-                        me.isAdmin || me.isEditor || me.isAuthor?
-                            `<span class="username btn-primary rounded ps-2 pe-2"> 
-                                <h6 class="d-inline m-0">${me.name}</h6>
-                                <i class="fa-solid fa-check ms-1"></i>
-                            </span>`
-                        :`<h6 class="m-0">${me.name}</h6>`
-                    }
-                    <i class="fa-solid fa-angles-right"></i> 
-                    <a class="text-decoration-none" href="#d${replyOnID}" onclick="getRepliedTo(this)")> ${data.commentOwnerName? data.commentOwnerName : data.replyOwnerName}</a></p>
-                </div>
-                <textarea class='form-control mb-3' rows="5" name='body' placeholder='Enter comment' required></textarea>
-                <button class='btn btn-primary btn-sm' type='submit' name='info' value=${JSON.stringify(data)}> Reply </button>
+        <form class='reply-comment m-0 mt-2 alert alert-secondary' id="${replyOnID}" method='post' action='/content/replies/add' onsubmit="addReply(event)"">
+            <span class="btn btn-close me-3 position-absolute end-0" onclick="closeReply(this)"></span>
+            <div class="user-details mb-2 d-flex gap-2 align-items-center">
+                <img class="img-icon rounded-circle" src='${me.img}'>
+                ${
+                    me.isAdmin || me.isEditor || me.isAuthor?
+                        `<span class="username btn-primary rounded ps-2 pe-2"> 
+                            <h6 class="d-inline m-0">${me.name}</h6>
+                            <i class="fa-solid fa-check ms-1"></i>
+                        </span>`
+                    :`<h6 class="m-0">${me.name}</h6>`
+                }
+                <i class="fa-solid fa-angles-right"></i> 
+                <a class="text-decoration-none" href="#d${replyOnID}" onclick="getRepliedTo(this)")> ${data.commentOwnerName? data.commentOwnerName : data.replyOwnerName}</a></p>
+            </div>
+            <textarea class='form-control mb-3' rows="5" name='body' placeholder='Enter comment' required></textarea>
+            <button class='btn btn-primary btn-sm' type='submit' name='info' value=${JSON.stringify(data)}> Reply </button>
         </form>
         `
     }
 } 
 const closeReply = target =>{//onclick on close button in the form in the previous function
-    replyFormOpened[target.parentElement.querySelector("a").href.slice(2).join("")] = false
+    replyFormOpened[target.parentElement.id] = false
     target.parentElement.remove()
 }
 
@@ -128,10 +128,15 @@ const addReply = e=>{//onclick on reply button in the add reply form after
         if(res.status === 201) return res.json() 
         else throw res.body;
     }).then(content=>{
+        const info = JSON.parse(data.get("info"))
+        const userIDToNotif= info.replyOwnerID? info.replyOwnerID : info.commentOwnerID
+        if(userIDToNotif != String(me._id))
+            socket.emit("notifyUser", userIDToNotif, {msg:`There is new reply on your comment in the content ${content.name}`, href:'/content/id/'+content._id})
         socket.emit("addReply", content)
     }).catch(err=>{
         console.error(err)
     })
+    replyFormOpened[form.id]= false
     form.remove()
 }
 

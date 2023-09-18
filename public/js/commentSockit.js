@@ -1,11 +1,6 @@
 const contentID = document.querySelector(".content-id").id
 document.querySelector(".content-id").remove()
 
-if(user)
-    socket.on('connect',()=>{
-        socket.emit('makeRoom',me._id)//to can emit specific functions for each user
-    })
-
 /* all following code is for update the page without need to reload it */
 
 socket.on("addCommentIn"+contentID, content=>{//when their is new 
@@ -39,20 +34,19 @@ socket.on("addCommentIn"+contentID, content=>{//when their is new
 })
 
 socket.on("addReplyIn"+contentID, content=>{//when their is new reply
-    console.log(content)
     const comment = content.comments[0];
     const replyToComment = document.querySelector("#d"+comment.newReply.replyToID)
     if(!replyToComment) return null
     if(comment.replies.length == 1){//if it is the first reply on the comment
         replyToComment.insertAdjacentHTML("afterend",`
         <div class="comment-replies ms-3 mb-3">
-            <div class="collapse replies ps-3 pt-3 pb-3 border-start border-2 border-secondary" id="reply${comment.newReply.replyToID}replies">
+            <div class="collapse replies ps-3 pt-3 pb-3 border-start border-2 border-secondary" id="replies${comment.newReply.replyToID}">
                 <div class="spinner-border text-primary ms-3" role="status">
                     <span class="visually-hidden"> Loading... </span>
                 </div>
             </div>
             <a class="mb-3 text-decoration-none" data-bs-toggle="collapse"
-                href="#reply${comment.newReply.replyToID}replies" 
+                href="#replies${comment.newReply.replyToID}" 
                 onclick='getReplies(this, "${comment._id}", "${comment.newReply.replyToID}")'
                 data-replies-num= "1"
             > show (1) new replies </a>
@@ -61,7 +55,7 @@ socket.on("addReplyIn"+contentID, content=>{//when their is new reply
 
     }else{//their is already replies on this comment
         const reachToLastReply = document.querySelector("#d"+comment.replies[0]._id)? true : false;
-        if(reachToLastReply){//the user click on show replies
+        if(reachToLastReply){//the user was opening the replies
             fetch("/content/comments/reply-html",{
                 method:'post',
                 headers:{'Content-Type':'application/json'},
@@ -69,16 +63,21 @@ socket.on("addReplyIn"+contentID, content=>{//when their is new reply
             }).then(res=>{
                 if(res.status === 200) return res.json()
                 else throw res.body;
-            }).then(reply=>{console.log(reply)
+            }).then(reply=>{
                 document.querySelector("#d"+reply.replyToID+" + .comment-replies > .replies").innerHTML+= reply.HTMLReply
                 const addTime = commentID=>{
                     const timeEle = document.querySelector("#d"+commentID+" .comment-time")
                     const {passedTime, nextInc} = calcPassedTime(parseInt(timeEle.dataset.timestamp))
                     timeEle.innerText= passedTime
-    
+                    
                     nextInc?setTimeout(commentID=>{addTime(commentID)}, nextInc, commentID):null
                 }
                 addTime(reply.id)
+                const repliesToggeler = document.querySelector("#d"+reply.replyToID+" + .comment-replies").lastElementChild;
+                const repliesNum = document.querySelectorAll("#d"+reply.replyToID+" + .comment-replies > .replies .reply").length
+                repliesToggeler.dataset.repliesNum = repliesNum
+                if(repliesToggeler.innerHTML != "show less")// if the user open the replies then close it, so the replies is exist but closed
+                    repliesToggeler.innerHTML = `show (${repliesNum}) new replies`
             }).catch(err=>{
                 console.error(err)
                 document.querySelector(".comments").innerHTML+= 
@@ -86,7 +85,9 @@ socket.on("addReplyIn"+contentID, content=>{//when their is new reply
             })
             
         }else{//the user did not open the replies
-            replyToComment.nextElementSibling.lastElementChild.innerText = `show (${comment.repliesNum}) new replies`
+            const showRepliesEle = replyToComment.nextElementSibling.lastElementChild
+            showRepliesEle.dataset.repliesNum = parseInt(showRepliesEle.dataset.repliesNum) + 1
+            showRepliesEle.innerText = `show (${showRepliesEle.dataset.repliesNum}) new replies`
         }
     }
 })

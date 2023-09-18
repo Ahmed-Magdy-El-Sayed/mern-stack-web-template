@@ -31,7 +31,7 @@ app.set('views','./views/pages')
 /* set the routs */
 app.get('/', getHome)
 app.use('/account',require('./routers/account.router'))
-app.use('/verify',require('./routers/router.verif'))
+app.use('/verify',require('./routers/verif.router'))
 app.use('/content',require('./routers/content.router'))
 
 app.all('*',(req,res)=>{res.status(404).render("error",{err:'Page not found!'})})

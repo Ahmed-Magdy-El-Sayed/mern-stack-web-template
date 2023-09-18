@@ -1,4 +1,3 @@
-const socket = io();
 const user = document.querySelector(".user").dataset.value
 const me = user? JSON.parse(user) : null
 delete user
@@ -160,7 +159,7 @@ const readNotif= target=>{ // when user open the notifications
             <li class="mb-2">
                 <a class="text-decoration-none ${notif.isReaded? "text-secondary" : "text-black"}" href="${notif.href}"> ${notif.msg} </a>
                 ${!notif.isReaded?
-                    `<span class="rounded-circle bg-primary text-white p-1 ps-2 pe-2 fs-6"> ${notif.num}</span>` :""
+                    `<span class="rounded-circle bg-primary text-white p-1 ps-2 pe-2 fs-6"> ${notif.num? notif.num : 1}</span>` :""
                 }
             </li>`
             })    
@@ -184,8 +183,6 @@ const readNotif= target=>{ // when user open the notifications
 }
 
 const logout = ()=>{window.location.href='/account/logout'}// when user click on logout button
-
-const openContent = contentID=>{window.location.href='/content/id/'+contentID} // when user click on a content card
 
 const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
 const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl)) // to allow bootstrap popover

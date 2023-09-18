@@ -31,31 +31,25 @@ module.exports ={
     createUser: async data =>{//for signup 
         if(!(/^[0-9a-zA-Z_]{3,}$/g.test(data.name)))
             return "The name should be 3 or more of numbers, upper or lower characters, or underscore only"
-        await bcrypt.hash(data.password, 10).then( val=>{
-            data.password = val;
-            hashed = true;
-        }).catch(err=>{
-            console.error('hashing error : ', err);
-            hashed= false;
-        })
-        if(hashed){
-            try {
-                return await dbConnect(async ()=>{
-                    return await usersModel.findOne({ name: data.name }).then(async exist=>{
-                        if(exist) return "the name already used"
-                        await usersModel.findOne({ email: data.email }).then(async exist=>{
-                            if(exist) return "the email already used"
-                            else {
-                                const {_id: id} = await new usersModel(data).save()
-                                return {id: id.toString()}
-                            }
-                        })
+        try {
+            await bcrypt.hash(data.password, 10).then( val=>{
+                data.password = val;
+            })
+            return await dbConnect(async ()=>{
+                return await usersModel.findOne({ name: data.name }).then(async exist=>{
+                    if(exist) return "the name is already used"
+                    return await usersModel.findOne({ email: data.email }).then(async exist=>{
+                        if(exist) return "the email is already used"
+                        else {
+                            const {_id: id} = await new usersModel(data).save()
+                            return {id: id.toString()}
+                        }
                     })
                 })
-            } catch (err) {
-                throw err
-            }
-        }else return false
+            })
+        } catch (err) {
+            throw err
+        }
     },
     authUser: async data =>{//for login 
         let user; 
@@ -144,12 +138,12 @@ module.exports ={
                         return false
                     
                     return await bcrypt.hash(data.password, 10).then(async val=>{
-                        return await usersModel.findByIdAndUpdate(data.id, {
+                        return await usersModel.updateOne({_id: data.id}, {
                             $set:{
                                 password: val,
                                 passwordResetCode: null
                             }
-                        }).then(()=>true)
+                        })
                     })
                 })
             })
@@ -171,8 +165,7 @@ module.exports ={
                 })
             })
         } catch (err) {
-            console.log(err);
-            return false
+            throw err
         }
     },
     updateVerif: async id=>{// generate new verif code
@@ -191,8 +184,7 @@ module.exports ={
                 })
             })
         } catch (err) {
-            console.log(err);
-            return false
+            throw err
         }
     },
     isVerified: async id=>{// check if the account email verified
@@ -206,8 +198,7 @@ module.exports ={
                 })
             })
         } catch (err) {
-            console.log(err);
-            return false
+            throw err
         }
     },
     updateProfile: async data=>{// change user data from the main bar
@@ -238,7 +229,7 @@ module.exports ={
                 if(changedImg) return changedImg
             })
         } catch (err) {
-            throw null
+            throw err
         }
     },
     deleteUser: async id=>{// delete the user account when he click on delete account button in update profile in the main bar
@@ -247,8 +238,7 @@ module.exports ={
                 return deleted? true : -1
             })
         } catch (err) {
-            console.log(err);
-            return false
+            throw err
         }
     },
     deleteUserByAdmin: async id=>{

@@ -150,13 +150,13 @@ const createCommentHTML = (contentAuthor, comment, user, newAdd)=>{
         </div>
         ${comment.repliesNum != "0"?
             `<div class="comment-replies w-75 ms-2 mb-3">
-                <div class="collapse replies ps-3 pt-3 pb-3 border-start border-2 border-primary" id='comment${comment._id}replies'>
+                <div class="collapse replies ps-3 pt-3 pb-3 border-start border-2 border-primary" id='replies${comment._id}'>
                     <div class="spinner-border text-primary ms-3" role="status">
                         <span class="visually-hidden"> Loading... </span>
                     </div>
                 </div>
                 <a class="mb-3 text-decoration-none" data-bs-toggle="collapse"
-                    href="#comment${comment._id}replies" 
+                    href="#replies${comment._id}" 
                     onclick='getReplies(this, "${comment._id}", "")'
                     data-replies-num= "${comment.repliesNum}"
                 > show (${comment.repliesNum}) replies </a>
@@ -330,13 +330,13 @@ const createReplyHTML = (contentAuthor, comment, user, newAdd)=>{
         </div>
         ${reply.repliesNum != "0"?`
             <div class="comment-replies ms-2 mb-3">
-                <div class="collapse replies ps-3 pt-3 pb-3 border-start border-2 border-secondary" id="reply${reply._id}replies">
+                <div class="collapse replies ps-3 pt-3 pb-3 border-start border-2 border-secondary" id="replies${reply._id}">
                     <div class="spinner-border text-primary ms-3" role="status">
                         <span class="visually-hidden"> Loading... </span>
                     </div>
                 </div>
                 <a class="mb-3 text-decoration-none" data-bs-toggle="collapse"
-                    href="#reply${reply._id}replies" 
+                    href="#replies${reply._id}" 
                     onclick='getReplies(this, "${comment._id}", "${reply._id}")'
                     data-replies-num= "${reply.repliesNum}"
                 > show (${reply.repliesNum}) replies </a>

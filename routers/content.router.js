@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router();
-const {
+const {getMoreContents,
     getContent, hideContent, 
     showContent, deleteContent, 
     addContent, reviewContent, 
@@ -12,6 +12,7 @@ const {
     isReviewer, isAuthor
 } = require('../controller/middelwares')
 
+router.post('/more', getMoreContents)
 router.get('/id/:id', getContent)
 router.post('/add', isAuthor, addContent)
 router.post('/hide', isAuthor, hideContent)

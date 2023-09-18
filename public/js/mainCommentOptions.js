@@ -7,22 +7,22 @@ const calcPassedTime = timestamp =>{// calc the time that passed from post the c
     const commentDateArray = commentDate.toLocaleDateString("en-GB").split("/").map(item=>parseInt(item));
     const nowDateArray = new Date().toLocaleDateString("en-GB").split("/").map(item=>parseInt(item));
 
-    let yearsNum = 1;
+    let yearsNum = 1;// the number of the years that passed since the comment date
     while(true){
-        let isFeatureDate = new Date(commentDate.setFullYear(commentDateArray[2] + yearsNum)).getTime() > new Date().getTime()
-        if(isFeatureDate){
-            break
-        }else yearsNum++
+        let reachToTheDate = new Date(new Date(commentDate).setFullYear(commentDateArray[2] + yearsNum)).getTime() < new Date().getTime()
+        if(reachToTheDate){
+            yearsNum++
+        }else break
     }
     yearsNum--
 
-    let monthsNum = 1;
+    let monthsNum = 1;// the number of the months that passed since the comment date
     if(yearsNum == 0){
         while(true){
-            let isFeatureDate = new Date(commentDate.setMonth( (commentDateArray[1]-1) + monthsNum)).getTime() > new Date().getTime()
-            if(isFeatureDate){
-                break
-            }else monthsNum++
+            let reachToTheDate = new Date(new Date(commentDate).setMonth( (commentDateArray[1]-1) + monthsNum)).getTime() < new Date().getTime()
+            if(reachToTheDate){
+                monthsNum++
+            }else break
         }
     }
     monthsNum--
@@ -36,10 +36,9 @@ const calcPassedTime = timestamp =>{// calc the time that passed from post the c
     const passedHours = Math.floor(passedMS / 1000 / 60 / 60)
     const passedMins = Math.floor(passedMS / 1000 / 60)
 
-
     let nextInc; // the duration that after it the comment passed time will increase - if it more than 1h the setTimeout will not be created
     if(passedYears){
-        nextInc = new Date(commentDate.setFullYear(nowDateArray[2]+1)).getTime() - new Date().getTime()
+        nextInc = new Date(new Date(commentDate).setFullYear(commentDateArray[2] + yearsNum +1)).getTime() - new Date().getTime()
         const daysToNextInc = Math.round(nextInc/1000/60/60/24); // reminded days
         if(passedYears == 1) return {
             passedTime:"since 1 Year" + (daysToNextInc < 182? " and half":""), 
@@ -50,7 +49,7 @@ const calcPassedTime = timestamp =>{// calc the time that passed from post the c
             nextInc: nextInc < 3*60*60*1000? daysToNextInc < 182? nextInc: daysToNextInc*60*60*1000 : null
         }
     }else if(passedMonths){
-        nextInc = new Date(commentDate.setFullYear(nowDateArray[2],nowDateArray[1])).getTime() - new Date().getTime()
+        nextInc = new Date(new Date(commentDate).setMonth( (commentDateArray[1]) + monthsNum)).getTime() - new Date().getTime()
         const daysToNextInc = Math.round(nextInc/1000/60/60/24); // reminded days
         if(passedMonths == 1) return {
             passedTime:"since 1 Month"+ (daysToNextInc < 15? " and half":""), 
@@ -167,6 +166,7 @@ const getReplies = (target, commentID, replyToID) =>{//onclick on show (number) 
         return null;
     }
     if(!target.previousElementSibling.firstElementChild.classList.contains("spinner-border")){
+        target.innerText = "show less"
         isGetRepliesRunning = false;
         return null
     }

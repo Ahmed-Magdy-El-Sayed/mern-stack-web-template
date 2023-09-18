@@ -1,11 +1,11 @@
-const {getReviewedContents, getUnderReviewContents, 
-    pushContent, getContentById, getContentByAuthorId,
-    setContentApproved, setContentRejected, markUnvisiable,
-    markVisiable, removeContent
+const {getReviewedContents, getMoreReviewedContents,
+    getUnderReviewContents, pushContent, getContentById, 
+    getContentByAuthorId, setContentApproved, setContentRejected, 
+    markUnvisiable, markVisiable, removeContent
 } = require('../models/contents');
 
 const {notifyReviewerWithoutRepeat} = require("./account.controller")
-const { sendEmailNotification } = require('./sendEmail');
+const { sendEmail } = require('./sendEmail');
 
 
 let profileEditErr;
@@ -18,6 +18,14 @@ const getHome = (req, res)=>{//load the home page
         res.render('home',{contents, user: req.session.user, profileEditErr, warning})
         profileEditErr = null;
     }).catch(()=>{res.status(500).render("error",{user: req.session.user, error: "internal server error"})});
+}
+
+const getMoreContents = (req, res)=>{
+    getMoreReviewedContents({...req.session.user,notifs:null},req.body.skip).then(contents=>{
+        res.status(200).json(contents)
+    }).catch(()=>{
+        res.status(500).render("error",{user: req.session.user, error: "internal server error"})
+    });
 }
 
 const getContent = (req, res) =>{// load the content page when user click on the content in home, myContent, or contentReview page
@@ -85,7 +93,7 @@ const showContent = (req, res)=>{
 const deleteContent = (req, res)=>{
     if(!req.body.contentID.match(/^[0-9a-fA-F]{24}$/))
         return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
-    removeContent({...req.body, userID: req.session.user._id}).then( ()=>{
+    removeContent(req.body, {...req.session.user, notifs:null}).then( ()=>{
         res.status(201).redirect("/")
     }).catch(err=>{
         console.log(err);
@@ -113,7 +121,7 @@ const approveContent = (req, res)=>{
         }
         setReviewMsg = "The content approved successfully"
         res.status(201).redirect("/content/review")
-        sendEmailNotification(
+        sendEmail(
             data.email, 
             {
                 title:"Your Content Is Approved", 
@@ -138,7 +146,7 @@ const rejectContent = (req, res)=>{
         }
         setReviewMsg = "The content rejected successfully"
         res.status(201).redirect("/content/review")
-        sendEmailNotification(
+        sendEmail(
             data.email, 
             {
                 title:"Your Content Is Rejected", 
@@ -157,7 +165,7 @@ const rejectContent = (req, res)=>{
 /* end the functions for contentReview page */
 
 module.exports={
-    getHome, getContent,
+    getHome, getContent, getMoreContents,
     getContentsByAuthor, addContent, 
     hideContent, showContent,
     deleteContent, reviewContent, 

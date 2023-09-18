@@ -114,11 +114,11 @@
                                             img.mb-1.img-icon.rounded-circle(style="width:20px; height:20px" src=content.author.img)
             if(comment.repliesNum != "0")
                 .comment-replies.w-75.ms-2.mb-3
-                    .collapse.replies.ps-3.pt-3.pb-3.border-start.border-2.border-primary(id="comment"+comment._id+"replies")
+                    .collapse.replies.ps-3.pt-3.pb-3.border-start.border-2.border-primary(id="replies"+comment._id)
                         .spinner-border.text-primary.ms-3(role="status")
                             span.visually-hidden Loading...
                     a.mb-3.text-decoration-none(data-bs-toggle="collapse" 
-                        href="#"+"comment"+comment._id+"replies"
+                        href="#"+"replies"+comment._id
                         onclick=`getReplies(this, "${comment._id}", "")`
                         data-replies-num= comment.repliesNum
                     )= `show (${comment.repliesNum}) replies`

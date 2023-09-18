@@ -20,7 +20,26 @@ module.exports = {
     getReviewedContents : async ()=>{// get the content that reviewed for the home page 
         try{
             return dbConnect(async()=>{
-                return await contentModel.find({isUnderReview: {$not:{$eq:true}}}, {comments:{replies:0}})
+                return await contentModel.find({isUnderReview: {$not:{$eq:true}}}, {comments:{replies:0}}).limit(10)
+            })
+        }catch(err){
+            throw err
+        }
+    },
+    getMoreReviewedContents : async (user, skip)=>{// get the content that reviewed for the home page 
+        try{
+            return dbConnect(async()=>{
+                if(user?.isAdmin || user?.isEditor)
+                    return await contentModel.find({isUnderReview: {$not:{$eq:true}}}, {comments:{replies:0}}).skip(skip).limit(10)
+                else if(user?.isAuthor)
+                    return await contentModel.find({isUnderReview: {$not:{$eq:true}}, 
+                        $match:{$or:[
+                            {hidden: {$not:{$eq:true}}},
+                            {hidden: true, "author.id": String(user._id)}
+                        ]}
+                    }, {comments:{replies:0}}).skip(skip).limit(10)
+                else
+                    return await contentModel.find({isUnderReview: {$not:{$eq:true}}, hidden: {$not:{$eq:true}}}, {comments:{replies:0}}).skip(skip).limit(10)
             })
         }catch(err){
             throw err
@@ -31,13 +50,13 @@ module.exports = {
             return dbConnect(async ()=>{
                 if(data.normalUser)
                     return await contentModel.findByIdAndUpdate(data.id, {$inc:{views: 1}}, {select:{comments:{replies:0}}}).then(content=>{
-                        if(content.comments.length > 10)
+                        if(content?.comments.length > 10)
                             content.comments = content.comments.slice(0, 10)
                         return content
                     })
                 else
                     return await contentModel.findById(data.id,{comments:{replies:0}}).then(content=>{
-                        if(content.comments.length > 10)
+                        if(content?.comments.length > 10)
                             content.comments = content.comments.slice(0, 10)
                         return content
                     })
@@ -87,10 +106,13 @@ module.exports = {
             throw err
         }
     },
-    removeContent: async data=>{// delete content
+    removeContent: async (data, user)=>{// delete content
         try{
             return dbConnect(async()=>{
-                await contentModel.deleteOne({_id: data.contentID, "author.id": data.userID})
+                if(user.isAdmin || user.isEditor)
+                    await contentModel.deleteOne({_id: data.contentID})
+                else
+                    await contentModel.deleteOne({_id: data.contentID, "author.id": user._id})
             })
         }catch(err){
             throw err

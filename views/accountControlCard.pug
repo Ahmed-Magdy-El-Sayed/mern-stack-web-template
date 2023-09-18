@@ -1,13 +1,13 @@
-.card.text-center(style="width: 18rem; cursor:pointer")
+.card.text-center(style="width: 18rem; cursor:pointer", id="card-"+account._id)
     .card-body
         img.img-icon.rounded-circle.mb-3(style="width: 60px; height: 60px;", src=account.img? account.img:"/user.jpg", alt="account img")
         h5= String(user._id) == String(account._id)? "Me" : account.name 
-        form.form-floating.mb-3(action="/account/authzs/change", method="post", onsubmit="changeAuthz(event)")
+        form.form-floating.mb-3(action="/account/authzs/change", method="post")
             input(type="hidden", name="userID", value=account._id)
             input.form-control.mb-2(type="hidden", name="email", value=account.email)
-            select.form-select(name="authz", id="select"+account._id, onchange="this.form.submit()")
+            select.form-select(name="authz", id="select"+account._id, onchange="changeAuthz(this.form)")
                 - let accountRole = account.isAdmin? "admin" : account.isEditor? "editor" : account.isAuthor? "author" : null
-                option(value="none", selected =accountRole? false : true) None
+                option(value="normal", selected =accountRole? false : true) None
                 option(value="author", selected =accountRole=="author") Author
                 option(value="editor", selected =accountRole=="editor") Editor
                 option(value="admin", selected =accountRole=="admin") Admin

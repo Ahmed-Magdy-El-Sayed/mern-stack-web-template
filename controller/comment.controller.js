@@ -12,7 +12,7 @@ const {
     createCommentHTML,
     createReplyHTML
 } = require('./createCommentHTML');
-const { sendEmailNotification } = require('./sendEmail');
+const { sendEmail } = require('./sendEmail');
 
 const setComment = (req, res)=>{//when add comment from content page
     const user = req.session.user
@@ -34,7 +34,7 @@ const setComment = (req, res)=>{//when add comment from content page
 }
 
 const getMoreComments = (req, res)=>{// when user click on show more at the end of comments in the content page
-    if(!req.body.id.match(/^[0-9a-fA-F]{24}$/))
+    if(!req.params.id.match(/^[0-9a-fA-F]{24}$/))
         return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
     getComments(req.params).then( result=>{
         result.comments = result.comments.map(comment=>createCommentHTML(result.author, comment, req.session.user))
@@ -103,32 +103,38 @@ const replyComment = (req, res)=>{
         replyOwnerImg: user.img,
         userIsAuthz: user.isAdmin || user.isEditor || user.isAuthor
     }
-    if(!req.body.info.contentID.match(/^[0-9a-fA-F]{24}$/) && !req.body.info.commentID.match(/^[0-9a-fA-F]{24}$/))
+    const info = JSON.parse(req.body.info)
+    if(!info.contentID.match(/^[0-9a-fA-F]{24}$/) && !info.commentID.match(/^[0-9a-fA-F]{24}$/))
         return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
     addReply(data).then(async result=>{
-        const commentID = JSON.parse(req.body.info).commentID
+        if(!result) return res.status(500).end()
+        const commentID = info.commentID
         result.comments = result.comments.filter(comment=> comment._id==commentID)
         const repliesNum = result.comments[0].replies.length;
         const newReplyObj = result.comments[0].replies.slice(-1).pop()
         if(repliesNum){
             result.comments[0].replies = result.comments[0].replies.filter(reply=>reply.replyToID == newReplyObj.replyToID).slice(-2)
             result.comments[0].newReply = newReplyObj
-        }
+        }else return res.status(500).end()
+
         res.status(201).json(result)
-        const email = await addNotif({userID: newReplyObj.repltToUserID, notif:{msg:`There is new reply on your comment in content ${result.name}`, href:'/content/id/'+result._id}})
-        await sendEmailNotification(email, {
-            title: "New Reply In Your Comment",
-            content:`
-            <h5>There is new reply in you comment <a href="${req.protocol + '://' + req.get('host')}/content/id/${result._id}">click here</a>to see the reply</h5>
-            `
-        })
+        if(newReplyObj.replyToUserID != String(user._id)){
+            const email = await addNotif({userID: newReplyObj.replyToUserID, notif:{msg:`There is new reply on your comment in the content ${result.name}`, href:'/content/id/'+result._id}})
+            await sendEmail(email, {
+                title: "New Reply In Your Comment",
+                content:`
+                <h5>There is new reply in your comment in the content ${result.name} <a href="${req.protocol + '://' + req.get('host')}/content/id/${result._id}">click here</a> to go to the content</h5>
+                <p style="white-space: pre-wrap;"><bold>The reply:</bold>\n "${newReplyObj.body}"</p>
+                `
+            })
+        }
     }).catch(err=>{console.log(err)
         res.status(500).end("internal server error")
     })
 }
 
 const getReplies = (req, res)=>{//when click on show replies under a comment or anther reply
-    if(!req.body.contentID.match(/^[0-9a-fA-F]{24}$/) && !req.body.commentID.match(/^[0-9a-fA-F]{24}$/))
+    if(!req.params.contentID.match(/^[0-9a-fA-F]{24}$/) && !req.params.commentID.match(/^[0-9a-fA-F]{24}$/))
         return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
     getRepliesByCommentID(req.params).then( content=>{
         let result = content.map(ele=>{//I made $unwind to comments & replies, so the comments attribute here is now an single object contain replies that also single 

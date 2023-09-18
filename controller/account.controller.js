@@ -6,7 +6,9 @@ const {
     clearUserNotif, deleteUserByAdmin, addNotif, updateNotif,
     getReviewersNotifs, markNotifReaded
 } = require('../models/users');
-const { sendEmailVerification, sendEmailNotification } = require('./sendEmail');
+const {sendEmail} = require('./sendEmail');
+
+const crypto = require("crypto")
 
 /* start the functions for signup page */
 const getSignup =(req,res)=>{// load the page
@@ -21,19 +23,27 @@ const postUser = (req,res) =>{//creat the account
         code: code,
         expire: expiration
     }
-    createUser(user).then(result=>{//the function returns object for the user id, string for already used name/email, or null for error
-        if(result){
-            if(result.id)
-                sendEmailVerification(user.email, code).then(()=>{
-                    res.render('verif',{id: result.id, expiration}) 
-                }).catch(err=>{
-                    console.error(err)
-                    res.status(500).render('error',{error: "internal server error"});
-                })
-            else
-                res.status(400).render('signup', {error: result}) 
-        }else
-            res.status(500).render('error',{error: "internal server error"});
+    user.img="/user.jpg"
+    createUser(user).then(result=>{//the function returns object for the user id, string for already used name/email, or throw error
+        if(result.id)
+            sendEmail(user.email, {
+                title:"Email Verification",
+                content:`
+                <p>Your verification code is: <strong>${code}</strong></p>
+                <strong>Note: This code expire after 15 min of sending this code first time</strong>
+                <p>If you did not sign up, please ignore this email.</p>
+                `
+            }).then(()=>{
+                res.render('verif',{id: result.id, expiration})
+            }).catch(err=>{
+                console.error(err)
+                res.status(500).render('error',{error: "internal server error"});
+            })
+        else
+            res.status(400).render('signup', {error: result}) 
+    }).catch(err=>{
+        console.error(err)
+        res.status(500).render('error',{error: "internal server error"});
     })
 }
 /* end the functions for signup page */
@@ -59,11 +69,18 @@ const checkUser = async (req, res) =>{//log in the user
         }else {// if get account success
             if(account.verif){// if the verification object not null, then the account is not verified
                 if(account.resend) {// if need to resend the code
-                    sendEmailVerification(user.email, account.verif).then(()=>{
+                    sendEmail(user.email, {
+                        title:"Email Verification",
+                        content:`
+                        <p>Your verification code is: <strong>${account.verif.code}</strong></p>
+                        <strong>Note: This code expire after 15 min of sending this code first time</strong>
+                        <p>If you did not sign up, please ignore this email.</p>
+                        `
+                    }).then(()=>{
                         res.render('verif',{id: account.id, expiration: account.verif.expire});
                     }).catch(err=>{
                         console.error(err)
-                        res.status(500).render('500')
+                        res.status(500).render('error', {error: "Internal server error"})
                     })
                 }else res.render('verif',{id: account.id, expiration: account.verif.expire});
             }else{// if the account is verified
@@ -86,6 +103,9 @@ const checkUser = async (req, res) =>{//log in the user
                 }
             }
         }
+    }).catch(err=>{
+        console.error(err)
+        res.status(500).render('error',{error: "internal server error"});
     })
 }
 
@@ -102,7 +122,7 @@ const sendRestEmail =(req, res)=>{
             res.redirect(req.get('Referrer'))
         }
         else{
-            sendEmailNotification(email, {
+            sendEmail(email, {
                 title: "Reset Your Account Password",
                 content: `
                 <h4>If you forgot your password <a href="${req.protocol + '://' + req.get('host')}/account/reset/${result.id}/${result.resetCode}">click here</a> to reset it</h4>
@@ -127,6 +147,9 @@ const resetPass= (req, res)=>{
             res.redirect("/account/login")
         :
             res.status(400).render("error", {error: "Bad Request! Try Again"})
+    }).catch(err=>{
+        console.error(err)
+        res.status(500).render('error',{error: "internal server error"});
     })
 }
 /* end the functions for login page */
@@ -162,36 +185,41 @@ const logout =(req,res)=>{
 
 const deleteAccount = (req, res)=>{// button in update profile option
     const user = req.session.user;
-    if(req.body.userID && user.isAdmin){
+    if(req.body.userID && user.isAdmin){//if the admin who delete the account
         if(!req.body.userID.match(/^[0-9a-fA-F]{24}$/))
             return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
         deleteUserByAdmin(req.body.userID).then(()=>{
             res.status(201).end()
-            sendEmailNotification(req.body.email, {
+            sendEmail(req.body.email, {
                 title:"Your Account Was Deleted",
                 content:`
-                <p>the admin delete your account</p>
+                <p>the admin deleted your account</p>
                 `
             })
+        }).catch(err=>{
+            console.log(err)
+            res.status(500).render("error",{user: req.session.user, error: "internal server error"})
         })
-    }else{
+    }else{//the user who delete his account
         req.session.destroy(err=>{
             if(err){
                 res.status(500).render("error",{user: req.session.user, error: "internal server error"})
                 return console.error(err)
             } 
             deleteUser(user._id).then(result=>{
-            if(!result) return res.status(500).render("error",{user: req.session.user, error: "internal server error"})
             if(result == -1) res.status(400).render("error",{user: req.session.user, error: "Account not found!"})
             else {
                 res.redirect(301,"/")
-                sendEmailNotification(req.body.email, {
+                sendEmail(user.email, {
                     title:"Your Account Was Deleted",
                     content:`
-                    <p>The account was delete successfully</p>
+                    <p>The account was deleted successfully</p>
                     `
                 })
                 }
+            }).catch(err=>{
+                console.log(err)
+                res.status(500).render("error",{user: req.session.user, error: "internal server error"})
             })
         });
     }
@@ -244,7 +272,7 @@ const changeAuthz= (req, res)=>{
         }
     }).then(()=>{
         res.status(201).end()
-        sendEmailNotification(req.body.email, {
+        sendEmail(req.body.email, {
             title:"Changing In The Authoriziation",
             content:`<p>The admin change your account authorization to be ${req.body.authz}</p>`
         })
@@ -259,7 +287,7 @@ const warningAccount = (req, res)=>{
         return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
     warningUser(req.body).then(()=>{
         res.status(201).end()
-        sendEmailNotification(req.body.email, {
+        sendEmail(req.body.email, {
             title:"Admin Warning",
             content:`<h5>The admin sent warning that: ${req.body.reason}</h5>`
         })
@@ -275,7 +303,7 @@ const banAccount = (req, res)=>{
     banUser(req.body).then(()=>{
         res.status(201).end()
         const banEndTime = new Date(new Date().getTime()+Math.floor(req.body.ending)*24*60*60*1000).toLocaleString("en")
-        sendEmailNotification(req.body.email, {
+        sendEmail(req.body.email, {
             title:"Your Account Is Banned",
             content:`
             <h5>your account is banned because: ${req.body.reason}</h5>
@@ -293,7 +321,7 @@ const unbanAccount = (req, res)=>{
         return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
     unbanUser(req.body).then(()=>{
         res.status(201).end()
-        sendEmailNotification(req.body.email, {
+        sendEmail(req.body.email, {
             title:"Your Account Is Unbanned",
             content:`
             <h5>The admin unban your account and you can login now</h5>
@@ -310,7 +338,7 @@ const unbanAccount = (req, res)=>{
 const notifyReviewerWithoutRepeat = (notifMsg, data)=>{// notify the admins and the editors that there is new content to review when author submit content
     getReviewersNotifs().then(reviewers=>{
         reviewers.forEach(async reviewer=>{
-            sendEmailNotification(
+            sendEmail(
                 reviewer.email, 
                 {
                     title:"New Content to review", 
@@ -333,7 +361,9 @@ const notifyReviewerWithoutRepeat = (notifMsg, data)=>{// notify the admins and 
                         console.log(err);
                     })
             }else
-                await addNotif({userID: reviewer._id, notif:{msg: notifMsg, href: "/content/review"}})
+                await addNotif({userID: reviewer._id, notif:{msg: notifMsg, href: "/content/review"}}).catch(err=>{
+                    console.log(err);
+                })
         })
     }).catch(err=>{
         console.log(err);
@@ -368,7 +398,8 @@ const readNotif = (req, res)=>{//when open the notifications
         })
         user.notifs.push(...editedNotif)
         res.status(201).end()
-    }).catch(()=>{
+    }).catch( err=>{
+        console.log(err)
         res.status(500).end("internal server error")
     })
 }

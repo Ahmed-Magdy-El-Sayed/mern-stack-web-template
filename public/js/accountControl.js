@@ -2,14 +2,15 @@ const createAccountHTML = accounts=>{
     return accounts.map(account=>{
         const accountType = account.isAuthor? "author" : account.isEditor?"editor": account.isAdmin?"admin":"user"
         return `
-        <div class="card text-center" style="width: 18rem; cursor:pointer">
+        <div class="card text-center" id="card-${account._id}" style="width: 18rem; cursor:pointer">
             <div class="card-body">
-                <img src=${account.img} alt="account img">
+                <img class="img-icon rounded-circle mb-3" style="width: 60px; height: 60px;" src="${account.img? account.img:"/user.jpg"}" alt="account img">
                 <h5> ${String(me._id) ==String(account._id)?"Me":account.name} </h5> 
                 <form class="form-floating mb-3" action="/account/authzs/change" method="post">
                     <input type="hidden" name="userID" value="${account._id}">
+                    <input type="hidden" name="email" value="${account.email}">
                     <select class="form-select" name="authz" id="select${account._id}" onchange="changeAuthz(this.form)">
-                        <option value="none" ${accountType == 'user'? 'selected' : ''}> None </option>
+                        <option value="normal" ${accountType == 'user'? 'selected' : ''}> None </option>
                         <option value="author" ${accountType == 'author'? 'selected' : ''}> Author</option>
                         <option value="editor" ${accountType == 'editor'? 'selected' : ''}> Editor</option>
                         <option value="admin" ${accountType == 'admin'? 'selected' : ''}> Admin</option>
@@ -21,36 +22,35 @@ const createAccountHTML = accounts=>{
                 ${String(me._id) == String(account._id)? "" 
                 :
                 (new Date().getTime() < account.ban?.ending)?
-                    `<p> this account is Banned until ${ new Date(parseInt(account.ban.ending)).toLocaleString("en")} </p>
-                    <form class="collapse mt-3" id="ban${account._id}" action="/account/ban/delete" method="post" oncsubmit="unban(event)">
-                        <button class="btn btn-primary" type="button"  name="userID" value="${account._id}"> unban </button>
-                    </form>`
+                    `<div class="ban-info">
+                        <p>"this account is Banned until ${new Date(parseInt(account.ban.ending)).toLocaleString("en")}</p>
+                        <form class="mt-3" id="unban${account._id}" action="/account/ban/delete" method="post" onsubmit="unban(event)">
+                            <input class="form-control mb-2" type="hidden" name="email" value="${account.email}"/>
+                            <button class="btn btn-primary" type="submit" name="userID" value="${account._id}">unban</button>
+                        </form>
+                    </div>`
                 :
-                    `${account.warning?
-                        `<p> The user did not login yet to see the warning.\n The warning reason: ${account.warning} </p>`:""
-                    }
-                    <div class="d-flex justify-content-around">
-                        ${!account.warning?
-                            `<button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#warning${account._id}"> Warning </button>` : ""
-                        }
-                        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#ban${account._id}"> Ban </button>
-                        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#delete${account._id}"> Delete</button>
-                    </div>
-                    <form class="collapse mt-3" id="ban${account._id}" action="/account/ban" method="post">
-                        <input class="form-control mb-2" type="text", name="reason" placeholder="Enter the ban reason" required>
-                        <input class="form-control mb-2" type="number"  min="1"  name="ending"  placeholder="Enter the ban duration (dayes)" required>
+                    `<button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#warning${account._id}">Warning </button>
+                    <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#ban${account._id}">Ban </button>
+                    <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#delete${account._id}">Delete </button>
+                    
+                    <form class="collapse mt-3" id="warning${account._id}" action="/account/warning" method="post" onsubmit="sendWarning(event)">
+                        <input class="form-control mb-2" type="text" name="reason" placeholder="Enter the warning reason" required="required" />
+                        <input class="form-control mb-2" type="hidden" name="email" value="${account.email}"/>
+                        <button class="btn btn-danger" type="submit" name="userID" value="${account._id}">Submit</button>
+                    </form>
+                    <form class="collapse mt-3" id="ban${account._id}" action="/account/ban" method="post" onsubmit="sendBan(event)">
+                        <input class="form-control mb-2" type="text" name="reason" placeholder="Enter the ban reason" required="required" />
+                        <input class="form-control mb-2" type="number" min="1" name="ending" placeholder="Enter the ban duration (dayes)" required="required" />
                         <p>no fractions</p>
-                        <button class="btn btn-primary" type="button"  name="userID", value=${account._id} onclick="sendBan(this)"> Ban </button>
+                        <input class="form-control mb-2" type="hidden" name="email" value="${account.email}"/>
+                        <button class="btn btn-danger" type="submit" name="userID" value="${account._id}">Ban</button>
                     </form>
-                    <form class="collapse mt-3" id="delete${account._id}" action="/account/delete" method="post">
-                        <p> Are you sure, you want to delete ${account.name} </p>
-                        <button class="btn btn-primary" type="button" name="userID" value=${account._id}, onclick="deleteAccount(this)"> Delete </button>
-                    </form>
-                    ${!account.warning?
-                        `<form class="collapse mt-3" id="warning${account._id}" action="/account/warning", method="post">
-                            <input> class="form-control mb-2" type="text" name="reason" placeholder="Enter the warning reason" required>
-                            <button class="btn btn-primary" type="button"  name="userID" value=${account._id} onclick="sendWarning(this)"> Submit </button>
-                        </form>` : ""}`
+                    <form class="collapse mt-3" id="delete${account._id}" action="/account/delete" method="post" onsubmit="deleteAccount(event)">
+                        <p>Are you sure, you want to delete this account</p>
+                        <input class="form-control mb-2" type="hidden" name="email" value="${account.email}"/>
+                        <button class="btn btn-danger" type="submit" name="userID" value="${account._id}">Delete</button>
+                    </form>`
                     }
             </div>
         </div>
@@ -285,36 +285,38 @@ const deleteAccount = e=>{//the same as sendBan
         else throw res.body;
     }).then(()=>{
         socket.emit("logoutUser", submitter.value)
-        form.parentElement.parentElement.parentElement.reomve()// delete account card
-        document.querySelector(".container").insertAdjacentHTML(// alert of success
-            "beforebegin",
-            `<div class="alert alert-success alert-dismissible fade show w-100 text-center position-fixed top-0 mt-5" style="z-index:5"> 
-                The account was Deleted successfully 
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="close"></button>
-            </div>`
-        )
+        if(!document.querySelector(".search-result-container").children.length){//if the account is 
+            form.parentElement.parentElement.parentElement.remove()// delete account card
+            document.querySelector(".container").insertAdjacentHTML(// alert of success
+                "beforebegin",
+                `<div class="alert alert-success alert-dismissible fade show w-100 text-center position-fixed top-0 mt-5" style="z-index:5"> 
+                    The account was Deleted successfully 
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="close"></button>
+                </div>`
+            )
+        }
     }).catch( err=>{
         console.error(err)
     })
 }
-const changeAuthz = e=>{
-    e.preventDefault()
-    const form = e.target
-    const submitter = e.submitter;
-    const formData = new FormData(form, submitter);
+const changeAuthz = form=>{console.log(form)
+    const formData = new FormData(form);
     const data = new URLSearchParams();
     for (const [key, value] of formData) {
         data.append(key, value);
     }
-    fetch(form.action,{//save canges in dhatabase
+    fetch(form.action,{//save changes in database
         method:'post',
         body: data
     }).then(res=>{
         if(res.status === 201) return null
         else throw res.body;
     }).then(()=>{
-        socket.emit("notifyUser", data.get(userID), {//to add notification without the account user need to refresh the page if he is online
-            msg:"The admin change your authorization to be "+ data.get(authz)+". logout and login again to apply the change", 
+        const accountEle = document.querySelector(".container #card-"+data.get("userID"))
+        accountEle.remove()
+        document.querySelector(`.${data.get("authz")}-accounts`).appendChild(accountEle)
+        socket.emit("notifyUser", data.get("userID"), {//to add notification without the account user need to refresh the page if he is online
+            msg:"The admin change your authorization to be "+ data.get("authz")+". logout and login again to apply the change", 
             href:""
         })
     }).catch( err=>{

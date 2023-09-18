@@ -4,7 +4,7 @@ block variables
 block content 
     .container.mt-3
         .reviewed
-            h1 My Contents
+            h2.mb-4 My Contents
             .reviewed-content.d-flex.flex-wrap.justify-content-center.gap-3
                 each content in contents.reviewed
                         .card.text-center(style="width: 18rem; cursor:pointer", onclick="openContent('"+content.id+"')")
@@ -16,7 +16,7 @@ block content
         if(user.isAuthor)
             hr
             .under-review
-                h1 Under Review Contents
+                h2.mb-4 Under Review Contents
                 .under-review-content.d-flex.flex-wrap.justify-content-center.gap-3
                     each content in contents.underReview
                             .card.text-center(style="width: 18rem; cursor:pointer", id=content._id, onclick="openContent('"+content.id+"')")

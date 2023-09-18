@@ -22,7 +22,7 @@ html
     body(style='box-sizing:border-box')
         nav.navbar.navbar-dark.navbar-expand-md.bg-dark.position-sticky.top-0(style="z-index:5")
             .container-fluid
-                a(class="navbar-brand" href="/") comments
+                a(class="navbar-brand" href="/") AMCodes
                 button(class="navbar-toggler text-dark border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation")
                     span(class='navbar-toggler-icon')
                 div(class="collapse navbar-collapse" id="navbarSupportedContent")
@@ -95,7 +95,9 @@ html
         block content
         script(src='/js/bootstrap.bundle.min.js')
         script(src='/socket.io/socket.io.js')
-        script(src='/js/main.js')
-        -if(user?.isAdmin || user?.isEditor)
-            script(src='/js/forAdminsAndEditors.js')
+        script  const socket = io();
+        if(user)
+            script(src='/js/main.js')
+            if(user.isAdmin || user.isEditor)
+                script(src='/js/forAdminsAndEditors.js')
         block js
