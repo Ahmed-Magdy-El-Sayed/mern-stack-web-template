@@ -18,6 +18,5 @@ module.exports = cb=>{
             console.error(err)
             reject()
         })
-        // mongoose.disconnect();
     })
 }

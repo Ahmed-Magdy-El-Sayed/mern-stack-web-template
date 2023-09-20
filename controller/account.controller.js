@@ -156,8 +156,6 @@ const resetPass= (req, res)=>{
 
 /* start the function of the main bar */
 const changeProfile = (req, res)=>{
-    if(!req.body.userID.match(/^[0-9a-fA-F]{24}$/))
-        return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
     updateProfile({filename:req.file?.filename,...req.body, userID: req.session.user}).then(value=>{
         if(value){
             if(value.err){
@@ -203,11 +201,11 @@ const deleteAccount = (req, res)=>{// button in update profile option
     }else{//the user who delete his account
         req.session.destroy(err=>{
             if(err){
-                res.status(500).render("error",{user: req.session.user, error: "internal server error"})
+                res.status(500).render("error",{user: req.session?.user, error: "internal server error"})
                 return console.error(err)
             } 
             deleteUser(user._id).then(result=>{
-            if(result == -1) res.status(400).render("error",{user: req.session.user, error: "Account not found!"})
+            if(result == -1) res.status(400).render("error",{user: req.session?.user, error: "Account not found!"})
             else {
                 res.redirect(301,"/")
                 sendEmail(user.email, {
@@ -219,7 +217,7 @@ const deleteAccount = (req, res)=>{// button in update profile option
                 }
             }).catch(err=>{
                 console.log(err)
-                res.status(500).render("error",{user: req.session.user, error: "internal server error"})
+                res.status(500).render("error",{user: req.session?.user, error: "internal server error"})
             })
         });
     }
@@ -302,7 +300,7 @@ const banAccount = (req, res)=>{
         return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
     banUser(req.body).then(()=>{
         res.status(201).end()
-        const banEndTime = new Date(new Date().getTime()+Math.floor(req.body.ending)*24*60*60*1000).toLocaleString("en")
+        const banEndTime = new Date(new Date().getTime()+Math.floor(req.body.duration)*24*60*60*1000).toLocaleString("en")
         sendEmail(req.body.email, {
             title:"Your Account Is Banned",
             content:`

@@ -36,12 +36,12 @@ html
                     if(user)
                         .dropdown.notif.me-3
                             i.fa-regular.fa-bell.fs-5.text-white.position-relative.icon(data-bs-toggle='dropdown', onclick="readNotif(this)")
-                                span.position-absolute.top-0.start-100.translate-middle.badge.rounded-circle.bg-danger.p-1(class=user.notifsNotReaded?"":"d-none", style="font-size: 1px;")= user.notifsNotReaded
+                                span.position-absolute.top-0.start-100.translate-middle.badge.rounded-circle.bg-danger.p-1(class=user.notifsNotReaded?"":"d-none", style="font-size: 10px;")= user.notifsNotReaded
                             ul.dropdown-menu.end-0.text-center.notif-content(style="left: unset; width: 40vw; max-height:50vh; overflow-y: overlay;")
                                 p No notifications
 
                         .dropdown.setting
-                            img.dropdown-toggle.img-icon.rounded-circle(src=user.img, data-bs-toggle='dropdown', alt="")
+                            img.dropdown-toggle.img-icon.rounded-circle(src=user.img?user.img:"/user.jpg", data-bs-toggle='dropdown', alt="")
                             ul.dropdown-menu.end-0.text-center(style="left: unset;")
                                 li.ms-2 Hello  
                                     h6.d-inline.m-0= user.name
@@ -74,7 +74,7 @@ html
                                 h1.modal-title.fs-5 Eidt Profile
                                 button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
                             .modal-body
-                                img.img-icon(style="width:100px; height:100px", src=user.img)
+                                img.img-icon(style="width:100px; height:100px", src=user.img?user.img:"/user.jpg")
                                 h1.d-inline.ms-3= user.name
                                 .input-group.mt-3.mb-3
                                     span.input-group-text Change Image
@@ -82,9 +82,13 @@ html
                                 .input-group.mt-3.mb-3
                                     span.input-group-text Change Password
                                     div.w-100
-                                        input.form-control(type='password' name='oldPass' onkeyup="changeProfile(event)" placeholder='Enter The Old Password')
-                                        input.form-control(type='password' name='newPass1' onkeyup="changeProfile(event)" placeholder='Enter The New Password')
-                                        input.form-control(type='password' name='newPass2' onkeyup="changeProfile(event)" placeholder='Enter The New Password Again')
+                                        input.form-control.mb-2(type='password' name='oldPass' onkeyup="changeProfile(event)" placeholder='Enter The Old Password')
+                                        .m-0.mb-2
+                                            input.form-control(type='password' name='newPass1' pattern="(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" onkeyup="changeProfile(event)" placeholder='Enter The New Password')
+                                            .invalid-feedback.main-password.w-auto.text-center
+                                        .m-0.mb-2
+                                            input.form-control(type='password' name='newPass2' onkeyup="changeProfile(event)" placeholder='Enter The New Password Again')
+                                            .invalid-feedback.main-password.w-auto.text-center The two feilds are not matched
                                         if(profileEditErr)
                                             p.faild-edit.alert.alert-danger= profileEditErr
                                 .input-group.mt-3.mb-3
@@ -95,9 +99,9 @@ html
         block content
         script(src='/js/bootstrap.bundle.min.js')
         script(src='/socket.io/socket.io.js')
-        script  const socket = io();
+        script(src='/js/main.js')
         if(user)
-            script(src='/js/main.js')
+            script(src='/js/mainForLoggedIn.js')
             if(user.isAdmin || user.isEditor)
-                script(src='/js/forAdminsAndEditors.js')
+                script(src='/js/mainForAdminsAndEditors.js')
         block js

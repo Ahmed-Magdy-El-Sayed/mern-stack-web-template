@@ -33,10 +33,10 @@ module.exports = {
                     return await contentModel.find({isUnderReview: {$not:{$eq:true}}}, {comments:{replies:0}}).skip(skip).limit(10)
                 else if(user?.isAuthor)
                     return await contentModel.find({isUnderReview: {$not:{$eq:true}}, 
-                        $match:{$or:[
+                        $or:[
                             {hidden: {$not:{$eq:true}}},
                             {hidden: true, "author.id": String(user._id)}
-                        ]}
+                        ]
                     }, {comments:{replies:0}}).skip(skip).limit(10)
                 else
                     return await contentModel.find({isUnderReview: {$not:{$eq:true}}, hidden: {$not:{$eq:true}}}, {comments:{replies:0}}).skip(skip).limit(10)
@@ -251,14 +251,14 @@ module.exports = {
                         }
                     })
                 else
-                console.log(await contentModel.updateOne({_id: data.contentID, comments:{$elemMatch:{_id: commentID, userID: data.user._id}}},{
+                await contentModel.updateOne({_id: data.contentID, comments:{$elemMatch:{_id: commentID, userID: data.user._id}}},{
                     $set:{
                         'comments.$.userID':null,
                         'comments.$.username':"Deleted",
                         'comments.$.userImg':"/user.jpg",
                         'comments.$.body':"Deleted Message"
                     }
-                }))
+                })
             })
         } catch (err) {
             throw err

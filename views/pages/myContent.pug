@@ -7,10 +7,10 @@ block content
             h2.mb-4 My Contents
             .reviewed-content.d-flex.flex-wrap.justify-content-center.gap-3
                 each content in contents.reviewed
-                        .card.text-center(style="width: 18rem; cursor:pointer", onclick="openContent('"+content.id+"')")
-                            .card-body
-                                h3.card-text.content-name.text-primary= content.name
-                                p= "comments: "+ content.commentsNum
+                    .card.text-center(style="width: 18rem; cursor:pointer", onclick="openContent('"+content.id+"')")
+                        .card-body
+                            h3.card-text.content-name.text-primary= content.name
+                            p= "comments: "+ content.commentsNum
                 if(!contents.reviewed.length)
                     .alert.alert-secondary.text-center.w-100 No content was reviewed yet
         if(user.isAuthor)
@@ -19,9 +19,9 @@ block content
                 h2.mb-4 Under Review Contents
                 .under-review-content.d-flex.flex-wrap.justify-content-center.gap-3
                     each content in contents.underReview
-                            .card.text-center(style="width: 18rem; cursor:pointer", id=content._id, onclick="openContent('"+content.id+"')")
-                                .card-body
-                                    h3.card-text.content-name.text-primary= content.name
+                        .card.text-center(style="width: 18rem; cursor:pointer", id=content._id, onclick="openContent('"+content.id+"')")
+                            .card-body
+                                h3.card-text.content-name.text-primary= content.name
                     if(!contents.underReview.length)
                         .alert.alert-secondary.text-center.w-100 No content under review
         hr
@@ -41,6 +41,7 @@ block content
                             .input-group.mt-3.mb-3
                                 span.input-group-text Content Name
                                 input.form-control(type='text' name='name' required)
+                                // ---------> here you should add the details of your app <---------
                             .alert.alert-info.w-100 edit the code in myContent.pug to add the reset of the data that your content use
                         .modal-footer
                             if(user.isAuthor)

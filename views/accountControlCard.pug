@@ -18,7 +18,8 @@
             .penalty
                 -if(new Date().getTime() < account.ban?.ending)
                     .ban-info
-                        p="this account is Banned until " + new Date(parseInt(account.ban.ending)).toLocaleString("en")
+                        p=  "this account is Banned until " + new Date(parseInt(account.ban.ending)).toLocaleString("en")
+                        p= "The reason: "+account.ban.reason
                         form(class="mt-3", id="unban"+account._id, action="/account/ban/delete", method="post" onsubmit="unban(event)")
                             input.form-control.mb-2(type="hidden", name="email", value=account.email)
                             button.btn.btn-primary(type="submit", name="userID", value=account._id) unban
@@ -35,7 +36,7 @@
                         
                     form(class="collapse mt-3" id="ban"+account._id, action="/account/ban", method="post", onsubmit="sendBan(event)")
                         input.form-control.mb-2(type="text", name="reason", placeholder="Enter the ban reason" required)
-                        input.form-control.mb-2(type="number", min="1", name="ending", placeholder="Enter the ban duration (dayes)" required)
+                        input.form-control.mb-2(type="number", min="1", name="duration", placeholder="Enter the ban duration (dayes)" required)
                         p no fractions
                         input.form-control.mb-2(type="hidden", name="email", value=account.email)
                         button.btn.btn-danger(type="submit", name="userID", value=account._id) Ban

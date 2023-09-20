@@ -25,7 +25,7 @@ const setComment = (req, res)=>{//when add comment from content page
     }
     if(!req.body.contentID.match(/^[0-9a-fA-F]{24}$/))
         return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
-    addComment(data).then(result=>{console.log(result.author)
+    addComment(data).then(result=>{
         result.comments = result.comments.pop()
         res.status(201).json(result)
     }).catch(()=>{

@@ -95,9 +95,9 @@ module.exports ={
                                     warning: []
                                 }})
                             else if(user.ban.ending < new Date().getTime()){// remove the ban if it ended
-                                console.log(await usersModel.findByIdAndUpdate(user._id, {$set:{
+                                await usersModel.findByIdAndUpdate(user._id, {$set:{
                                     ban: null
-                                }}))
+                                }})
                                 user.ban = null
                             }
                             return user;
@@ -160,7 +160,7 @@ module.exports ={
                     if(verif.expire <= new Date().getTime()) return {expired:true};
                     if(verif.code == code){
                         const user = await usersModel.findByIdAndUpdate(id, {$unset: {verification: 1}}, {new: true})
-                        return {id: user._id, name: user.name, email: user.email, image: user.image}
+                        return user
                     }else return {notTheCode:true, expire:verif.expire};
                 })
             })
@@ -374,7 +374,7 @@ module.exports ={
         try {
             return await dbConnect(async ()=>{
                 await usersModel.findByIdAndUpdate(data.userID, {$set:{
-                    ban: {reason: data.reason, ending: new Date().getTime()+Math.floor(data.ending)*24*60*60*1000}
+                    ban: {reason: data.reason, ending: new Date().getTime()+Math.floor(data.duration)*24*60*60*1000}
                 },$inc:{
                     bansNum: 1
                 }})

@@ -137,7 +137,9 @@ form(class='write-comment alert alert-secondary m-0 text-center position-sticky 
                     i.fa-solid.fa-check.ms-2
             else
                 h5= user.name
-        textarea(class='form-control mb-3' name='body' placeholder='Enter comment' rows='5' required)
-        button(class='btn btn-primary' type='submit' name='contentID' value= content._id) Send
+            button.btn.btn-outline-primary.ms-auto(type="button", data-bs-toggle="collapse", data-bs-target="#add-comment") Write Comment
+        .collapse(id="add-comment") 
+            textarea(class='form-control mb-3' name='body' placeholder='Enter comment' rows='5' required)
+            button(class='btn btn-primary' type='submit' name='contentID' value= content._id) Send
     else 
         h5.without-account login first

@@ -26,7 +26,7 @@ block content
                                 i.fa-regular.fa-eye.me-3(data-bs-container="div", data-bs-toggle="popover", data-bs-placement="bottom", data-bs-content="The Views Number")
                                 span.dropdown.mb-3
                                     button.dropdown-toggle.btn.btn-primary(type="button", data-bs-toggle='dropdown') Setting
-                                    form.dropdown-menu(method="post")
+                                    form.dropdown-menu.me-5(method="post")
                                         input(type="hidden", name="contentID", value=content._id)
                                         if(String(user._id) == content.author.id)
                                             if(content.hidden)
@@ -38,7 +38,7 @@ block content
                                                     .input-group-text Make the content hidden from other users except the admins and editors
                                                     button.btn.btn-secondary.rounded(type="submit", formaction="/content/hide") Hide 
                                         .input-group.justify-content-center.flex-nowrap
-                                            .input-group-text Delete The content from the website
+                                            .input-group-text(style="width:inherit;") Delete The content from the website
                                             button.btn.btn-danger.rounded(type="submit", formaction="/content/delete") Delete
                 .content-id.d-none(id=content._id)
                 .content-author.d-none(data-author=content.author)
@@ -61,9 +61,9 @@ block content
 block js
     if(content)
         -if(!content.isUnderReview)
-            script(src='/js/commentSockit.js')
-            script(src='/js/mainCommentOptions.js')
+            script(src='/js/content/commentSockit.js')
+            script(src='/js/content/mainCommentOptions.js')
             if(user)
-                script(src='/js/loggedInCommentOptions.js')
+                script(src='/js/content/loggedInCommentOptions.js')
         -else if(!user?.isAuthor)
-            script(src='/js/contentUnderReview.js')
+            script(src='/js/content/contentUnderReview.js')
