@@ -113,7 +113,7 @@ const replyComment = (req, res)=>{
         const repliesNum = result.comments[0].replies.length;
         const newReplyObj = result.comments[0].replies.slice(-1).pop()
         if(repliesNum){
-            result.comments[0].replies = result.comments[0].replies.filter(reply=>reply.replyToID == newReplyObj.replyToID).slice(-2)
+            result.comments[0].replies = result.comments[0].replies.filter(reply=>newReplyObj.deepestTo?(newReplyObj.deepestTo==reply.deepestTo):(newReplyObj.replyToID==reply.replyToID)).slice(-2)
             result.comments[0].newReply = newReplyObj
         }else return res.status(500).end()
 

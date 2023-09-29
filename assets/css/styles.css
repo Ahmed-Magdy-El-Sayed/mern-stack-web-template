@@ -1,9 +1,17 @@
-/* .navbar-toggler-icon{
-    width:30px
+.notif .notif-content{
+    left: unset !important; 
+    width: 40vw; 
+    right: 0;
+    max-height:50vh; 
+    overflow-y: overlay;
 }
-.navbar form.w-25{
-    width: 30%!important;
-} */
+@media (max-width: 576px){
+    .notif .notif-content{
+        width:90vw;
+        right: -50px;
+    }   
+}
+
 i, a{
    cursor: pointer; 
 }
@@ -16,6 +24,10 @@ img{
 .img-icon{
     width: 40px;
     height: 40px;
-    cursor:pointer;
+    object-fit: cover;
+}
+.img-icon-sm{
+    width: 20px;
+    height: 20px;
     object-fit: cover;
 }

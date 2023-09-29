@@ -1,0 +1,78 @@
+extends ./modules/main
+block variables
+    - let pageTitle = "Content"
+block content
+    if(content)
+        -if(content.hidden && !(user?.isAdmin || user?.isEditor || String(user?._id) == content.author.id))
+            .alert.alert-warning.w-100.text-center Not allowed to preview this content
+        -else
+            if(content.hidden)
+                -if(String(user?._id) == content.author.id)
+                    .alert.alert-warning.w-100.text-center you changes the content setting to be unvisiable to normal users and the other authors
+                -else
+                    .alert.alert-warning.w-100.text-center the author changes the content setting to be unvisiable to normal users and the other authors
+            .container.mt-3
+                h1.content-name.alert-alert-primary.text-center= content.name
+
+                // --------- here you should add the details of your app ---------
+
+                .author.d-flex.justify-content-between.align-items-center
+                    .details.d-flex.gap-2
+                            p.m-0 By:
+                            .text-center
+                                img.m-auto.img-icon.rounded-circle(
+                                    style="cursor:pointer;", 
+                                    src=content.author.img, 
+                                    alt="",
+                                    onclick="openProfile('"+content.author.id+"')"
+                                    )
+                                p= content.author.name
+                    .forAuthor
+                        if(!content.isUnderReview)
+                            -if(String(user?._id) == content.author.id || user?.isAdmin || user?.isEditor)
+                                span.me-2= content.views
+                                i.fa-regular.fa-eye.me-3(data-bs-container="div", data-bs-toggle="popover", data-bs-placement="bottom", data-bs-content="The Views Number")
+                                span.mb-3
+                                    button.btn.btn-primary(type="button", data-bs-toggle='collapse', data-bs-target="#content-setting") Setting
+                -if(!content.isUnderReview && (String(user?._id) == content.author.id || user?.isAdmin || user?.isEditor))
+                    form.collapse.mb-3(method="post", id="content-setting")
+                        input(type="hidden", name="contentID", value=content._id)
+                        if(String(user._id) == content.author.id)
+                            if(content.hidden)
+                                .input-group.mb-3.justify-content-center.flex-nowrap
+                                    .input-group-text.text-center.text-wrap.w-100 show the content
+                                    button.btn.btn-primary.rounded(type="submit", formaction="/content/show") show
+                            else
+                                .input-group.mb-3.justify-content-center.flex-nowrap
+                                    .input-group-text.text-wrap.w-100 Make the content hidden from other users except the admins and editors
+                                    button.btn.btn-secondary.rounded(type="submit", formaction="/content/hide") Hide 
+                        .input-group.justify-content-center.flex-nowrap
+                            .input-group-text.text-wrap.w-100 Delete The content from the website
+                            button.btn.btn-danger.rounded(type="submit", formaction="/content/delete") Delete
+                .content-id.d-none(id=content._id)
+                .content-author.d-none(data-author=content.author)
+                .alert.alert-info.w-100 her you should add the details of your content
+                -if(!content.isUnderReview)
+                    include ./modules/comment
+                -else if(content.selectedBy == String(user?._id))
+                    form.d-flex.justify-content-end.gap-3.position-sticky.bottom-0(method='post' action='/content/approve')
+                        button.btn.btn-success(type="button", name="contentID", value=content._id, onclick="sendApproval(this)") Approve
+                        input(type="hidden", name="authorID", value=content.author.id)
+                        button.btn.btn-danger(type="button", data-bs-toggle="collapse", data-bs-target="#reject") Reject 
+
+                    form(class="collapse mt-3 w-75 m-auto text-center", id="reject", action="/content/reject", method="post")
+                        input(type="hidden", name="authorID", value=content.author.id)
+                        input.form-control.mb-2(type="text", name="reason", placeholder="Enter the rejection reason", required)
+                        button.btn.btn-primary(type="button", name="contentID", value=content._id, onclick="sendRejection(this)") Submit
+    else
+        h3(class="alert alert-danger w-100 text-center") content not found!
+        
+block js
+    if(content)
+        -if(!content.isUnderReview)
+            script(src='/js/content/commentSockit.js')
+            script(src='/js/content/mainCommentOptions.js')
+            if(user)
+                script(src='/js/content/loggedInCommentOptions.js')
+        -else if(!user?.isAuthor)
+            script(src='/js/content/contentUnderReview.js')

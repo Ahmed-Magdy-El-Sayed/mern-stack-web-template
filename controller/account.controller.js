@@ -1,11 +1,12 @@
 const { 
     createUser, authUser, createResetCode, resetAccountPass, 
-    getFrist10Accounts, getAccountsByRole, getAccountsByName, 
+    getAuthorData, getFrist10Accounts, getAccountsByRole, getAccountsByName, 
     banUser, unbanUser, warningUser, 
     changeUserAuthz, updateProfile, deleteUser, 
     clearUserNotif, deleteUserByAdmin, addNotif, updateNotif,
     getReviewersNotifs, markNotifReaded
 } = require('../models/users');
+const {getContentByAuthorId} = require("../models/contents")
 const {sendEmail} = require('./sendEmail');
 
 const crypto = require("crypto")
@@ -224,6 +225,55 @@ const deleteAccount = (req, res)=>{// button in update profile option
 }
 /* end the functions of main bar */
 
+const getProfile = async (req, res)=>{//load myContent page
+    const profileUserID = req.params.id;
+    if(!(profileUserID.match(/^[0-9a-fA-F]{24}$/)))
+        return res.status(400).render('error', {error: "Bad Request! try again."})
+    
+    const sessionUser = req.session.user;
+    let contents;
+    if(profileUserID == String(sessionUser?._id)){
+        if(sessionUser.isAdmin || sessionUser.isEditor || sessionUser.isAuthor){
+            contents = await getContentByAuthorId(sessionUser._id).then(contents=>{
+                const groupedContents = {underReview:[], reviewed: []};
+                contents.forEach(content => {
+                    groupedContents[content.isUnderReview? "underReview" : "reviewed"].push(content)
+                });
+                return groupedContents
+            }).catch(err=>{console.log(err);
+                res.status(500).render("error",{user: req.session.user, error: "internal server error"})
+                return "error"
+            });
+        }
+        if(contents == "error")
+            return null
+        res.render('profile',{contents, user: sessionUser})
+    }else{
+        getAuthorData(profileUserID).then(async user=>{
+            if(!user) return res.status(400).render('error', {error: "Bad Request! try again."})
+            
+            if(user.isAdmin || user.isEditor || user.isAuthor){
+                contents = await getContentByAuthorId(profileUserID).then(contents=>{
+                    let reviewedContents = [];
+                    contents.forEach(content => {
+                        if(!content.isUnderReview)
+                            reviewedContents.push(content)
+                    });
+                    return reviewedContents
+                }).catch(err=>{console.log(err);
+                    res.status(500).render("error",{user: req.session.user, error: "internal server error"})
+                    return "error"
+                });
+            }
+            if(contents == "error")
+                return null
+            res.render('profile',{contents, author: user, user: sessionUser})
+        }).catch(err=>{console.log(err);
+            res.status(500).render("error",{user: req.session.user, error: "internal server error"})
+        });
+    }
+}
+
 /* start the functions of accountControl page */
 const getAccounts = (req, res)=>{// load the page
     getFrist10Accounts().then(accounts=>{
@@ -379,7 +429,7 @@ const clearNotif = (req, res)=>{// if user click on clear notification option in
     clearUserNotif(req.session.user._id).then(()=>{
         req.session.user.notifs = []
         res.status(201).end()
-    }).catch(()=>{
+    }).catch(err=>{console.log(err);
         res.status(500).end("internal server error")
     })
 }
@@ -405,6 +455,7 @@ const readNotif = (req, res)=>{//when open the notifications
 
 module.exports={
     getSignup, getLogin, 
+    getProfile,
     getForgetPassPage, sendRestEmail,
     getResetPage, resetPass,
     postUser, checkUser,

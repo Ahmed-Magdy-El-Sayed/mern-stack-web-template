@@ -27,27 +27,41 @@ socket.on("addCommentIn"+contentID, content=>{//when their is new
         }).catch(err=>{
             console.error(err)
             document.querySelector(".comments").innerHTML+= 
-                "<p class='alert alert-danger w-100'>failed to get a new comment, reload the page to show it</p>"
+                `<p class='alert alert-danger alert-dismissible fade show w-100'>failed to get a new comment, reload the page to show it
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="close"></button>
+                </p>`
         })
         
     }
 })
 
-socket.on("addReplyIn"+contentID, content=>{//when their is new reply
+socket.on("addReplyIn"+contentID, content=>{console.log(content)//when their is new reply
     const comment = content.comments[0];
-    const replyToComment = document.querySelector("#d"+comment.newReply.replyToID)
-    if(!replyToComment) return null
+    const commentShowRepliesEle = document.querySelector(`#d${comment._id} + .comment-replies > div ~ a:last-child`)
+    const replyToID = comment.newReply.deepestTo? comment.newReply.deepestTo : comment.newReply.replyToID
+    const replyTo = document.querySelector("#d"+replyToID)
+    if(!replyTo){
+        if(commentShowRepliesEle){
+            commentShowRepliesEle.dataset.repliesNum = comment.repliesNum
+            commentShowRepliesEle.innerHTML = `show (${comment.repliesNum}) new replies`
+        }
+        return null
+    }
+    if(commentShowRepliesEle && String(comment._id) != replyToID){
+        commentShowRepliesEle.dataset.repliesNum = comment.repliesNum
+    }
+    console.log(commentShowRepliesEle)
     if(comment.replies.length == 1){//if it is the first reply on the comment
-        replyToComment.insertAdjacentHTML("afterend",`
-        <div class="comment-replies ms-3 mb-3">
-            <div class="collapse replies ps-3 pt-3 pb-3 border-start border-2 border-secondary" id="replies${comment.newReply.replyToID}">
+        replyTo.insertAdjacentHTML("afterend",`
+        <div class="comment-replies mb-3">
+            <div class="collapse replies ps-5 pt-3 pb-3 border-start border-2 ${String(comment._id) == replyToID?"border-primary":"border-secondary"}" id="replies${replyToID}">
                 <div class="spinner-border text-primary ms-3" role="status">
                     <span class="visually-hidden"> Loading... </span>
                 </div>
             </div>
             <a class="mb-3 text-decoration-none" data-bs-toggle="collapse"
-                href="#replies${comment.newReply.replyToID}" 
-                onclick='getReplies(this, "${comment._id}", "${comment.newReply.replyToID}")'
+                href="#replies${replyToID}" 
+                onclick='getReplies(this, "${comment._id}", "${replyToID==String(comment._id)?"":replyToID}")'
                 data-replies-num= "1"
             > show (1) new replies </a>
         </div>
@@ -64,7 +78,8 @@ socket.on("addReplyIn"+contentID, content=>{//when their is new reply
                 if(res.status === 200) return res.json()
                 else throw res.body;
             }).then(reply=>{
-                document.querySelector("#d"+reply.replyToID+" + .comment-replies > .replies").innerHTML+= reply.HTMLReply
+                const replyToID = reply.deepestTo?reply.deepestTo:reply.replyToID
+                document.querySelector("#d"+replyToID+" + .comment-replies > .replies").innerHTML+= reply.HTMLReply
                 const addTime = commentID=>{
                     const timeEle = document.querySelector("#d"+commentID+" .comment-time")
                     const {passedTime, nextInc} = calcPassedTime(parseInt(timeEle.dataset.timestamp))
@@ -73,19 +88,21 @@ socket.on("addReplyIn"+contentID, content=>{//when their is new reply
                     nextInc != null?setTimeout(commentID=>{addTime(commentID)}, nextInc, commentID):null
                 }
                 addTime(reply.id)
-                const repliesToggeler = document.querySelector("#d"+reply.replyToID+" + .comment-replies").lastElementChild;
-                const repliesNum = document.querySelectorAll("#d"+reply.replyToID+" + .comment-replies > .replies .reply").length
+                const repliesToggeler = document.querySelector("#d"+replyToID+" + .comment-replies").lastElementChild;
+                const repliesNum = document.querySelectorAll("#d"+replyToID+" + .comment-replies > .replies .reply").length
                 repliesToggeler.dataset.repliesNum = repliesNum
                 if(repliesToggeler.innerHTML != "show less")// if the user open the replies then close it, so the replies is exist but closed
                     repliesToggeler.innerHTML = `show (${repliesNum}) new replies`
             }).catch(err=>{
                 console.error(err)
                 document.querySelector(".comments").innerHTML+= 
-                    "<p class='alert alert-danger w-100'>failed to get a new reply, reload the page to show it</p>"
+                    `<p class='alert alert-danger alert-dismissible fade show w-100'>failed to get a new reply, reload the page to show it
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="close"></button>
+                    </p>`
             })
             
         }else{//the user did not open the replies
-            const showRepliesEle = replyToComment.nextElementSibling.lastElementChild
+            const showRepliesEle = replyTo.nextElementSibling.lastElementChild
             showRepliesEle.dataset.repliesNum = parseInt(showRepliesEle.dataset.repliesNum) + 1
             showRepliesEle.innerText = `show (${showRepliesEle.dataset.repliesNum}) new replies`
         }
@@ -138,7 +155,7 @@ socket.on("addLoveIn"+contentID, (commentID, authorImg)=>{//the Auther add love 
             theComment.querySelector(".author-react").innerHTML=`
                 <span class="btn-danger ps-2 pe-2 pt-1 pb-1 me-3 rounded-pill">
                     <i class="fa-solid text-white fa-heart text-danger"></i>
-                    <img class="img-icon mb-1 rounded-circle" style="width:20px; height:20px" src='${authorImg}'>
+                    <img class="img-icon-sm mb-1 rounded-circle" src='${authorImg}'>
                 </span>
             `
         else{// if the user is the author
@@ -168,7 +185,7 @@ socket.on("reactIn"+contentID, (commentID, react)=>{//their is new like or disli
     if(theComment){//check if exist
         const likeCounter = theComment.querySelector(".likes-counter");
         const likeIcon = likeCounter.nextElementSibling;
-        //react.likes/dislikes values => ( - ) for reduce, ( + ) for incearse, ( 0 ) for nothing
+        //react.like/dislike values => negtive for reduce, postive for incearse, zero for nothing
         likeCounter.innerText = parseInt(likeCounter.innerText)+react.like
         if(react.like){// to change the icon, the react.like should be changing frist  
             likeIcon.classList.contains("fa-regular")? 

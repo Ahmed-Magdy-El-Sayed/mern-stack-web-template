@@ -8,7 +8,7 @@ const port = process.env.PORT || 3000
 const {getHome}= require('./controller/content.controller');
 
 const STORE = new sessionStore({
-    uri:"mongodb://localhost:27017/comment",//change database name here and in dbConnect.js in models folder
+    uri:"mongodb://localhost:27017/comment",//change database name here and in dbConnect.js in models folder to your database name
     collection:"sessions"
 })
 
@@ -17,7 +17,7 @@ app.use(express.static('./images'))
 app.use(express.urlencoded({extended:false}))
 app.use(express.json())
 app.use(session({
-    secret:'e9345b8aec6ba345ef3b5593c8e1ce397cdbfb901c36ab8766e5a0538b6ee8d3',//change the secret string here
+    secret:'ed0d1d5cbbb81661fd20d8e8994238d6f3baa419bddbaa6d1bbe3aa9f78b6f2e',//change the secret string here
     cookie: { maxAge: 3 * 24 * 60 * 60 * 1000 },
     resave: true,
     saveUninitialized: false,
@@ -26,7 +26,7 @@ app.use(session({
 
 /* set pugJS and the files path */
 app.set('view engine','pug')
-app.set('views','./views/pages')
+app.set('views','./views')
 
 /* set the routs */
 app.get('/', getHome)
@@ -45,6 +45,7 @@ io.onlineUsers = {}
 io.onlineReviewers = {}
 
 io.on("connection", socket=>{
+    /* start global events */
     socket.on('makeRoom',id=>{
         socket.join(id);
     })
@@ -52,52 +53,69 @@ io.on("connection", socket=>{
     socket.on('changeOnlineUsers',id=>{
         io.onlineUsers[id] = true;
         socket.on("disconnect",()=>{
-            io.onlineUsers[id] = false;
-            io.emit('onlineUsers',io.onlineUsers)
+            delete io.onlineUsers[id];
+            io.emit('onlineUsers',io.onlineUsers)// the listener in assets/js/mainForReviewers.js
         })
         io.emit('onlineUsers',io.onlineUsers)
     })
 
     socket.on('changeOnlineReviewers',id=>{
-        io.onlineReviewers[id] = true;
+        io.onlineReviewers[id] = true; // add the reviewer to the object 
         socket.on("disconnect",()=>{
-            io.onlineReviewers[id] = false;
+            delete io.onlineReviewers[id];
             io.emit('onlineReviewers',io.onlineReviewers)
-            
         })
-        io.emit('onlineReviewers',io.onlineReviewers) // add the reviewer to thr object 
-        io.emit('onlineUsers',io.onlineUsers) // send him the onlineUsers
-    })
-
-    socket.on("confirmReviewers", ()=>{
-        Object.keys(io.onlineReviewers).forEach(id=>{
-            io.to(id).emit("newContent")
-        })
+        io.emit('onlineUsers',io.onlineUsers) // send the new reviewer the onlineUsers.js
     })
 
     socket.on("notifyUser", (id, notif)=>{
-        io.to(id).emit("noify", notif)
+        io.to(id).emit("noify", notif)// the listener in assets/js/mainForLoggedIn.js
     })
 
+    /* end global events */
+    
+    /* start accounts control events */
     socket.on('applyWarning',(id, reason)=>{
         if(io.sockets.adapter.rooms.get(id)){
             io.to(id).emit("warning", reason)
-            socket.emit("userOnline")
+            socket.emit("userOnline")// the listener in assets/js/accountControl.js
         }else
-            socket.emit("userOffline")
+            socket.emit("userOffline")// the same
     })
-    socket.on('logoutUser',(id)=>{
-        io.to(id).emit("changesInAccount")
+    socket.on('logoutUser',(id)=>{// when ban or delect account
+        io.to(id).emit("changesInAccount")// the listener in assets/js/mainForLoggedIn.js
     })
     socket.on('changeAuthorization',id=>{
         io.to(id).emit("changesInAccount")
     })
+    /* end accounts control events */
+
+    /* start review contents events */
+    socket.on("confirmReviewers", ()=>{
+        Object.keys(io.onlineReviewers).forEach(id=>{
+            io.to(id).emit("newContent")// the listener in assets/js/mainForReviewers
+        })
+    })
+    socket.on('hiddeContent', contentID=>{
+        Object.keys(io.onlineReviewers).forEach(reviewer=>{
+            socket.to(reviewer).emit("hiddeContent", contentID)// the listener in assets/js/contentReview.js
+        })
+    })
+    socket.on('showContent', content=>{
+        Object.keys(io.onlineReviewers).forEach(reviewer=>{
+            socket.to(reviewer).emit("showContent", content)// the listener in assets/js/contentReview.js
+        })
+    })
     socket.on('sendApproval',(userID, contentID, contentName)=>{
-        io.to(userID).emit("approveContent", contentID, contentName)
+        io.to(userID).emit("approveContent", contentID, contentName)// the listener in assets/js/content/contentUnderReview.js
     })
     socket.on('sendRejection',(userID, contentID, contentName, reason)=>{
-        io.to(userID).emit("rejectContent", contentID, contentName, reason)
+        io.to(userID).emit("rejectContent", contentID, contentName, reason)// the listener in assets/js/content/contentUnderReview.js
     })
+    /* end review contents events */
+
+    /* start update comments events */
+    // the listeners of all following events are in assets/js/content/commentSocket.js
     socket.on("addComment",content=>{
         io.emit("addCommentIn"+content._id, content)
     })
@@ -125,7 +143,9 @@ io.on("connection", socket=>{
     socket.on("react",(data, react)=>{
         io.emit("reactIn"+data.contentID, data.replyID?data.replyID:data.commentID, react)
     })
+    /* start update comments events */
 })
+
 /* start the server */
 server.listen(port, err=>{
     err? console.log(err): console.log('server running on port '+port)

@@ -4,7 +4,7 @@ mongoose.set('strictQuery', false);
 
 module.exports = cb=>{
     return new Promise(async (resolve, reject)=>{
-        await mongoose.connect('mongodb://localhost:27017/comment')
+        await mongoose.connect('mongodb://localhost:27017/comment')//change database name here and in app.js to your database name
         .then(()=>{
             return cb()
             .then(resalt=>{

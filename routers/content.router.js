@@ -4,8 +4,8 @@ const {getMoreContents,
     getContent, hideContent, 
     showContent, deleteContent, 
     addContent, reviewContent, 
-    approveContent, rejectContent, 
-    getContentsByAuthor
+    selectContent, unselectContent,
+    approveContent, rejectContent
 }= require('../controller/content.controller');
 
 const {
@@ -19,9 +19,10 @@ router.post('/hide', isAuthor, hideContent)
 router.post('/show', isAuthor, showContent)
 router.post('/delete', isAuthor, deleteContent)
 router.get('/review', isReviewer, reviewContent)
+router.post('/select', isReviewer, selectContent)
+router.post('/unselect', isReviewer, unselectContent)
 router.post('/approve', isReviewer, approveContent)
 router.post('/reject', isReviewer, rejectContent)
-router.get('/my-content', isAuthor, getContentsByAuthor)
 
 router.use('',require('./comment.router'))
 

@@ -15,13 +15,17 @@ const uSchema = new mongoose.Schema({
     },
     notifs:[{msg: String, href: String, num:{type: Number, default:1}, isReaded: Boolean}],
     notifsNotReaded:{type: Number, default: 0},
-    isAdmin:{type: Boolean, default: false},
-    isEditor:{type: Boolean, default: false},
     isAuthor:{type: Boolean, default: false},
+    isEditor:{type: Boolean, default: false},
+    isAdmin:{type: Boolean, default: false},
+    totalReviews:Number,
+    contentsNum:Number,
     ban: {reason: String, ending: String},
     bansNum:{type: Number, default: 0},
+    allBansReasons: [String],
     warning: [String],
     warningsNum:{type: Number, default: 0},
+    allWarningsReasons: [String],
     deleteByAdmin: Boolean
 })
 
@@ -252,6 +256,51 @@ module.exports ={
             throw err
         }
     },
+    incTotleReviews: async userID=>{
+        try {
+            return await dbConnect(async ()=>{
+                await usersModel.updateOne({_id: userID}, {$inc:{
+                    totalReviews: 1
+                }})
+            })
+        } catch (err) {
+            throw err
+        }
+    },
+    incAuthorContentNum: async userID=>{
+        try {
+            return await dbConnect(async ()=>{
+                await usersModel.updateOne({_id: userID}, {$inc:{
+                    contentsNum: 1
+                }})
+            })
+        } catch (err) {
+            throw err
+        }
+    },
+    decAuthorContentNum: async userID=>{
+        try {
+            return await dbConnect(async ()=>{
+                await usersModel.updateOne({_id: userID}, {$inc:{
+                    contentsNum: -1
+                }})
+            })
+        } catch (err) {
+            throw err
+        }
+    },
+    
+    /* start the function for profile page */
+    getAuthorData:async userID =>{
+        try {
+            return await dbConnect(async ()=>{
+                return await usersModel.findById(userID,{name:1, img:1, isAdmin:1, isEditor:1, isAuthor:1})
+            })
+        } catch (err) {
+            throw err
+        }
+    },
+    /* end the function for profile page */
     
     /* start the function for accountsControl page */
     getFrist10Accounts: async ()=>{//when admin open the page
@@ -354,14 +403,17 @@ module.exports ={
     warningUser: async data=>{
         try {
             return await dbConnect(async ()=>{
-                if(data.reason?.trim())
+                if(data.saveWarning)
                     await usersModel.findByIdAndUpdate(data.userID, {$push:{
-                        warning: data.reason
+                        warning: data.reason,
+                        allWarningsReasons: data.reason
                     },$inc:{
                         warningsNum: 1
                     }})
-                else if(!data.reason){
-                    await usersModel.findByIdAndUpdate(data.userID, {$inc:{
+                else{
+                    await usersModel.findByIdAndUpdate(data.userID, {$push:{
+                        allWarningsReasons: data.reason
+                    },$inc:{
                         warningsNum: 1
                     }})
                 }
@@ -375,6 +427,8 @@ module.exports ={
             return await dbConnect(async ()=>{
                 await usersModel.findByIdAndUpdate(data.userID, {$set:{
                     ban: {reason: data.reason, ending: new Date().getTime()+Math.floor(data.duration)*24*60*60*1000}
+                },$push:{
+                    allBansReasons: data.reason
                 },$inc:{
                     bansNum: 1
                 }})

@@ -1,10 +1,11 @@
 const {getReviewedContents, getMoreReviewedContents,
     getUnderReviewContents, pushContent, getContentById, 
-    getContentByAuthorId, setContentApproved, setContentRejected, 
+    selectToReview, unselectToReview, setContentApproved, setContentRejected, 
     markUnvisiable, markVisiable, removeContent
 } = require('../models/contents');
-
+const {incTotleReviews, incAuthorContentNum, decAuthorContentNum} = require('../models/users'); 
 const {notifyReviewerWithoutRepeat} = require("./account.controller")
+
 const { sendEmail } = require('./sendEmail');
 
 
@@ -42,15 +43,7 @@ const getContent = (req, res) =>{// load the content page when user click on the
 }
 
 /* start the functions for myContent page */
-const getContentsByAuthor = (req, res)=>{//load myContent page
-    getContentByAuthorId(req.session.user._id).then(contents=>{
-        const groupedContents = {underReview:[], reviewed: []};
-        contents.forEach(content => {
-            groupedContents[content.isUnderReview? "underReview" : "reviewed"].push(content)
-        });
-        res.render('myContent',{contents: groupedContents, user: req.session.user})
-    }).catch(()=>{res.status(500).render("error",{user: req.session.user, error: "internal server error"})});
-}
+
 
 const addContent = (req, res)=>{
     const user = req.session.user;
@@ -63,6 +56,8 @@ const addContent = (req, res)=>{
     pushContent({...req.body, author}).then( ()=>{
         notifyReviewerWithoutRepeat("there are new contents to review", {contentName: req.body.name, authorName: author.name, root:req.protocol + '://' + req.get('host')})//send notification of new content to review, and not add it if there is previous notification with the same body (their is new content to review) and not readed
         res.status(201).redirect(req.get('Referrer'))
+        if(user.isEditor || user.isAdmin)
+            incAuthorContentNum(user._id)
     }).catch(err=>{
         console.log(err);
         res.status(500).render("error",{user: req.session.user, error: "internal server error"})
@@ -93,8 +88,9 @@ const showContent = (req, res)=>{
 const deleteContent = (req, res)=>{
     if(!req.body.contentID.match(/^[0-9a-fA-F]{24}$/))
         return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
-    removeContent(req.body, {...req.session.user, notifs:null}).then( ()=>{
+    removeContent(req.body, {...req.session.user, notifs:null}).then( ({author})=>{
         res.status(201).redirect("/")
+        decAuthorContentNum(author.id)
     }).catch(err=>{
         console.log(err);
         res.status(500).render("error",{user: req.session.user, error: "internal server error"})
@@ -105,10 +101,29 @@ const deleteContent = (req, res)=>{
 /* start the functions for contentReview page */
 let setReviewMsg;
 const reviewContent = (req, res)=>{//load the page
-    getUnderReviewContents().then(contents=>{
+    getUnderReviewContents(req.session.user._id).then(contents=>{
         res.render('contentReview',{contents, user: req.session.user, setReviewMsg})
         setReviewMsg = null;
     }).catch(()=>{res.status(500).render("error",{user: req.session.user, error: "internal server error"})});
+}
+
+const selectContent = (req, res)=>{
+    selectToReview({...req.body, userID: req.session.user._id}).then(()=>{
+        res.status(201).end()
+    }).catch(err=>{
+        console.error(err)
+        res.status(500).end()
+    })
+}
+
+const unselectContent = (req, res)=>{
+    unselectToReview(req.body).then(()=>{
+        res.status(201).end()
+    }).catch(err=>{
+        console.error(err)
+        res.status(500).end()
+    })
+
 }
 
 const approveContent = (req, res)=>{
@@ -121,6 +136,8 @@ const approveContent = (req, res)=>{
         }
         setReviewMsg = "The content approved successfully"
         res.status(201).redirect("/content/review")
+        incTotleReviews(req.session.user._id)
+        incAuthorContentNum(data.authorID)
         sendEmail(
             data.email, 
             {
@@ -146,6 +163,7 @@ const rejectContent = (req, res)=>{
         }
         setReviewMsg = "The content rejected successfully"
         res.status(201).redirect("/content/review")
+        incTotleReviews(req.session.user._id)
         sendEmail(
             data.email, 
             {
@@ -166,8 +184,8 @@ const rejectContent = (req, res)=>{
 
 module.exports={
     getHome, getContent, getMoreContents,
-    getContentsByAuthor, addContent, 
-    hideContent, showContent,
+    addContent, hideContent, showContent,
     deleteContent, reviewContent, 
+    selectContent, unselectContent,
     approveContent, rejectContent
 };

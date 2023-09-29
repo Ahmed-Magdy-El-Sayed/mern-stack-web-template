@@ -5,9 +5,10 @@ const multer = require('multer');
 const {
     getAccounts, getMoreAccounts, 
     getMatchedAccounts, getSignup, 
-    getLogin, getForgetPassPage,
-    sendRestEmail, getResetPage,
-    resetPass, 
+    getLogin, getProfile,
+    getForgetPassPage,
+    sendRestEmail, 
+    getResetPage, resetPass, 
     deleteAccount, changeProfile, 
     changeAuthz, updateSessionNotif,
     clearNotif, readNotif, 
@@ -29,6 +30,7 @@ router.post('/password-forgot/send-email', sendRestEmail)
 router.get('/reset/:id/:resetCode', getResetPage)
 router.post('/password-reset', resetPass)
 router.post('/login', checkUser)
+router.get('/profile/:id', getProfile)
 
 router.post('/change-profile', multer({
     storage: multer.diskStorage({//to save new profile img in images folder

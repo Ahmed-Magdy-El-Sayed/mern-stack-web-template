@@ -1,0 +1,42 @@
+extends ./modules/main
+block variables
+    - var pageTitle = 'Content Review'
+block content
+    if(setReviewMsg)
+        .alert.alert-success.w-100.text-center= setReviewMsg
+    .container.mt-3
+            h2 Selected Content
+            p The content that you selected to review
+            .selected-content.d-flex.flex-wrap.justify-content-center.gap-3
+                if(contents.selected.length)
+                    each content in contents.selected
+                        .card.text-center(style="width: 18rem; cursor:pointer", id=content._id, onclick="openContent('"+content.id+"')")
+                            .card-body
+                                h3.card-text.text-primary= content.name
+                                p.m-0 author: 
+                                span.d-flex.gap-2.justify-content-center.align-items-center
+                                    img.img-icon.rounded-circle(src=content.author.img, alt="author img")
+                                    h6.m-0= content.author.name
+                                // --------- add your content details here ---------
+                                button.unselect.btn.btn-outline-danger.mt-3(type="button", onclick="unselect(event, '"+content._id+"')") Unselect
+                else   
+                    h3.alert.alert-secondary.w-100.text-center No content selected to review
+            hr
+            h2 Content To Select
+            p The content that waiting to be selected to review
+            .to-select-content.d-flex.flex-wrap.justify-content-center.gap-3
+                if(contents.selectFrom.length)
+                    each content in contents.selectFrom
+                        .card.text-center(style="width: 18rem; cursor:pointer", id=content._id, onclick="openContent('"+content.id+"')")
+                            .card-body
+                                h3.card-text.text-primary= content.name
+                                p.m-0 author: 
+                                span.d-flex.gap-2.justify-content-center.align-items-center
+                                    img.img-icon.rounded-circle(src=content.author.img, alt="author img")
+                                    h6.m-0= content.author.name
+                                // --------- add your content details also here ---------
+                                button.select.btn.btn-outline-primary.mt-3(type="button", onclick="select(event, '"+content._id+"')") Select
+                else   
+                    h3.alert.alert-secondary.w-100.text-center No content waiting to review
+block js 
+    script(src="/js/contentReview.js") 

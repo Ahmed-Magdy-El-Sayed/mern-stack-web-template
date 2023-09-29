@@ -151,6 +151,7 @@ const sendWarning = e=>{
     const reason = form.children.reason.value
     socket.emit("applyWarning", submitter.value, reason)// to show the warning if the user is online, without send to database
     socket.on("userOffline", ()=>{// if the user is offline, increase the warning counter and save the warning in database until the user login
+        data.saveWarning= true
         fetch(form.action,{
             method:'post',
             body: data
@@ -164,7 +165,6 @@ const sendWarning = e=>{
         })
     })
     socket.on("userOnline", ()=>{// if the user is online, increase the warning counter without save the warning itself
-        data.delete("reason")
         fetch(form.action,{
             method:'post',
             body: data

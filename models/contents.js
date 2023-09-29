@@ -10,6 +10,7 @@ const contentSchema = new mongoose.Schema({
     commentsNum: {type:Number, default: 0},
     author: {id:String, name: String, img: String},
     isUnderReview:{type:Boolean, default:false},
+    selectedBy: {type: String, default: ""},
     comments:{type: Array, default: []}
 })
 
@@ -20,6 +21,7 @@ module.exports = {
     getReviewedContents : async ()=>{// get the content that reviewed for the home page 
         try{
             return dbConnect(async()=>{
+                
                 return await contentModel.find({isUnderReview: {$not:{$eq:true}}}, {comments:{replies:0}}).limit(10)
             })
         }catch(err){
@@ -110,9 +112,9 @@ module.exports = {
         try{
             return dbConnect(async()=>{
                 if(user.isAdmin || user.isEditor)
-                    await contentModel.deleteOne({_id: data.contentID})
-                else
-                    await contentModel.deleteOne({_id: data.contentID, "author.id": user._id})
+                    return await contentModel.findByIdAndDelete({_id: data.contentID}, {select:{author:1}})
+                
+                return await contentModel.findByIdAndDelete({_id: data.contentID, "author.id": user._id}, {select:{author:1}})
             })
         }catch(err){
             throw err
@@ -121,10 +123,35 @@ module.exports = {
     /* end the functions for myContent page */
 
     /* start the functions for contentReview page */
-    getUnderReviewContents: async ()=>{// when admin or the editor open accountsControl page to review the contents
+    getUnderReviewContents: async userID=>{// when admin or the editor open accountsControl page to review the contents
         try{
             return dbConnect(async()=>{
-                return await contentModel.find({isUnderReview: true})
+                return {
+                    selectFrom: await contentModel.find({isUnderReview: true, selectedBy: ""}),
+                    selected: await contentModel.find({isUnderReview: true, selectedBy: userID})
+                }
+            })
+        }catch(err){
+            throw err
+        }
+    },
+    selectToReview: async data=>{// when the reviewer (admin or editor) approve the content
+        try{
+            return dbConnect(async ()=>{
+                await contentModel.findByIdAndUpdate(data.contentID, {$set:{
+                    selectedBy: data.userID, 
+                }})
+            })
+        }catch(err){
+            throw err
+        }
+    },
+    unselectToReview: async data =>{// when the reviewer (admin or editor) approve the content
+        try{
+            return dbConnect(async ()=>{
+                await contentModel.findByIdAndUpdate(data.contentID, {$set:{
+                    selectedBy: "", 
+                }})
             })
         }catch(err){
             throw err
@@ -135,11 +162,11 @@ module.exports = {
             return dbConnect(async ()=>{
                 const content = await contentModel.findByIdAndUpdate(data.contentID, {$set:{
                     isUnderReview: false, 
-                }},{select:{name:1}})
+                }},{select:{name:1, author:1}})
                 if(!content) return false
                 const notif = {msg: `Your content ${content.name} was approved and added to the website content`, href:"/content/id/"+String(content._id)}
                 const email = await addNotif({userID: data.authorID, notif})// to notify the author
-                return{email, notif}
+                return{email, notif, authorID: content.author.id}
             })
         }catch(err){
             throw err
@@ -333,7 +360,10 @@ module.exports = {
         try {
             const info = JSON.parse(data.info)
             const commentID = new mongoose.Types.ObjectId(info.commentID)
-            const repliesNum = info.replyID? 'comments.$.replies.$[reply].repliesNum' : 'comments.$.repliesNum'
+            const repliesNum = info.replyID? 
+            {'comments.$.replies.$[reply].repliesNum':1,
+            'comments.$.repliesNum':1} 
+            : {'comments.$.repliesNum':1}
             return dbConnect(async()=>{
                 await contentModel.updateOne({_id: info.contentID, 'comments._id': commentID},{
                     $push:{
@@ -346,6 +376,7 @@ module.exports = {
                         replyToID: info.replyID? info.replyID : info.commentID,// the id of the comment/reply that user reply on it
                         replyToUserID: info.commentOwnerID? info.commentOwnerID : info.replyOwnerID,
                         replyToUserName: info.commentOwnerName? info.commentOwnerName : info.replyOwnerName,
+                        deepestTo: info.replyID? info.deepestTo?info.deepestTo:info.replyID : null,// to mark third level comments (reply in reply) with all it's inner levels
                         timestamp: new Date().getTime(),
                         body: data.body,
                         likes:[],
@@ -354,11 +385,9 @@ module.exports = {
                     }}
                 })
                 return await contentModel.findOneAndUpdate({_id: info.contentID, 'comments._id': commentID},{
-                    $inc:{
-                        [repliesNum]:1
-                    }
+                    $inc: repliesNum
                 },{
-                    arrayFilters:[{'reply._id': new mongoose.Types.ObjectId(info.replyID)}],
+                    arrayFilters:[{'reply._id': new mongoose.Types.ObjectId(info.deepestTo? info.deepestTo: info.replyID)}],
                     new: true
                 })
             })
@@ -368,6 +397,8 @@ module.exports = {
     },
     getRepliesByCommentID: async data=>{// when user click on show replies under the comemnts or anthor replies
         try{
+            const theMatching = data.replyToID != "none"? {"comments.replies.deepestTo": data.replyToID}
+                : {"comments.replies.replyToID": data.commentID}
             return dbConnect(async ()=>{
                 return await contentModel.aggregate([
                     {
@@ -389,9 +420,7 @@ module.exports = {
                         "$unwind": "$comments.replies"
                     },
                     {
-                        "$match": {
-                            "comments.replies.replyToID": data.replyToID == "none"? data.commentID : data.replyToID
-                        }
+                        "$match": theMatching
                     }
                 ])
             })

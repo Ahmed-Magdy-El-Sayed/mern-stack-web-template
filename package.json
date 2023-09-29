@@ -1,5 +1,5 @@
 {
-  "name": "multipurpose",
+  "name": "codexpress",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
@@ -7,7 +7,7 @@
     "run": "nodemon app"
   },
   "keywords": [],
-  "author": "",
+  "author": "AMCodes",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.0",

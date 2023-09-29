@@ -5,24 +5,24 @@ const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     secure: true,
     auth: {
-        user: 'amcodes55@gmail.com',
-        pass: 'ziichubwyythblop'
+        user: '',// add your email that will be the sender
+        pass: ''// add your email app password
     }
 });
 
 module.exports={
     sendEmail: async function (email, notif) {
         const mailOptions = {
-            from: 'amcodes55@gmail.com',
+            from: '',//repeat your email again
             to: email,
             subject: notif.title,
             html: `
             <div style="width:80%;text-align:center; font-family: sans-serif;">
-                <div style="padding: 10px 0;background-color:#333;color: white;margin:auto;">AMCodes</div>
+                <div style="padding: 10px 0;background-color:#333;color: white;margin:auto;">CodeXpress</div>
                 ${notif.content}
             </div>
             `
         };
-        await transporter.sendMail(mailOptions);
+        // await transporter.sendMail(mailOptions);
     }
 }

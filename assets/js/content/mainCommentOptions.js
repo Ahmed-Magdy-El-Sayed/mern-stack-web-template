@@ -5,7 +5,6 @@ const calcPassedTime = timestamp =>{// calc the time that passed from post the c
     const commentDate = new Date(timestamp);
 
     const commentDateArray = commentDate.toLocaleDateString("en-GB").split("/").map(item=>parseInt(item));
-    const nowDateArray = new Date().toLocaleDateString("en-GB").split("/").map(item=>parseInt(item));
 
     let yearsNum = 1;// the number of the years that passed since the comment date
     while(true){
@@ -168,7 +167,8 @@ const getReplies = (target, commentID, replyToID) =>{//onclick on show (number) 
     }).then(data=>{
         target.parentElement.querySelector(".replies").innerHTML=""
         data.forEach( reply=>{
-            document.querySelector("#d"+reply.replyToID+" + .comment-replies > .replies").innerHTML+= reply.HTMLReply
+            const replyToID = reply.deepestTo? reply.deepestTo : reply.replyToID
+            document.querySelector("#d"+replyToID+" + .comment-replies > .replies").innerHTML+= reply.HTMLReply
             target.innerText = "show less"
             const addTime = commentID=>{
                 const timeEle = document.querySelector("#d"+commentID+" .comment-time")

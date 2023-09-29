@@ -117,10 +117,11 @@ const commentOptions = (contentAuthor, comment, user) =>{
 }
 
 const createCommentHTML = (contentAuthor, comment, user, newAdd)=>{
+    // if you make any change here you need to apply it also in views/modules/comment and may in assets/js/content/commentSocket.js
     return {
         id: comment._id,
         HTMLComment:`
-        <div class="comment p-2 w-75" id= 'd${comment._id}'>
+        <div class="comment col-md-10 pt-3" id= 'd${comment._id}'>
             <div class="user-details d-flex gap-2 align-items-center">
                 <img class="img-icon rounded-pill" src='${comment.userImg? comment.userImg : "/user.jpg"}'>
                 <div class="details">
@@ -149,8 +150,8 @@ const createCommentHTML = (contentAuthor, comment, user, newAdd)=>{
             </div>
         </div>
         ${comment.repliesNum != "0"?
-            `<div class="comment-replies w-75 ms-2 mb-3">
-                <div class="collapse replies ps-3 pt-3 pb-3 border-start border-2 border-primary" id='replies${comment._id}'>
+            `<div class="comment-replies col-md-10s">
+                <div class="collapse replies ps-5 border-start border-2 border-primary" id='replies${comment._id}'>
                     <div class="spinner-border text-primary ms-3" role="status">
                         <span class="visually-hidden"> Loading... </span>
                     </div>
@@ -187,6 +188,7 @@ const replyOptions = (contentAuthor, commentID, reply, user) =>{
             replyID:  reply._id,
             replyOwnerID:  reply.userID,
             replyOwnerName:  reply.username,
+            deepestTo: reply.deepestTo
         })}'
         onclick="replyComment(this)"></i>
         `
@@ -292,13 +294,15 @@ const replyOptions = (contentAuthor, commentID, reply, user) =>{
 }
 
 const createReplyHTML = (contentAuthor, comment, user, newAdd)=>{
-    // commnet.replies here contain single reply object. To know why this see the comment in getReplies() in comment.controller
+    // if you make any change here you may need to apply it also in assets/js/content/commentSocket.js
+    // commnet.replies here contain single reply object. To know why this, see the comment in getReplies() in comment.controller.js
     const reply = comment.replies;
     return {
         id: reply._id,
         replyToID: reply.replyToID,
+        deepestTo: reply.deepestTo,
         HTMLReply:`
-        <div class="reply p-2" id="d${reply._id}">
+        <div class="reply pt-3" id="d${reply._id}">
             <div class="user-details d-flex gap-2 align-items-center">
                 <img class="img-icon rounded-pill" src='${reply.userImg? reply.userImg : "/user.jpg"}'>
                 <div class="details">
@@ -329,8 +333,8 @@ const createReplyHTML = (contentAuthor, comment, user, newAdd)=>{
             </div>
         </div>
         ${reply.repliesNum != "0"?`
-            <div class="comment-replies ms-2 mb-3">
-                <div class="collapse replies ps-3 pt-3 pb-3 border-start border-2 border-secondary" id="replies${reply._id}">
+            <div class="comment-replies">
+                <div class="collapse replies ps-5 border-start border-2 border-secondary" id="replies${reply._id}">
                     <div class="spinner-border text-primary ms-3" role="status">
                         <span class="visually-hidden"> Loading... </span>
                     </div>

@@ -81,7 +81,7 @@ const deleteComment = target =>{//onclick on trash icon at the bottom of a comme
 let replyFormOpened={}
 const replyComment = target =>{//onclick on reply icon in the buttom of comment/reply elements by any logged in users except admins, editors, and authors
     const data = JSON.parse(target.dataset.values);
-    const replyOnID = data.commentID?data.commentID:data.replyID;
+    const replyOnID = data.replyID?data.replyID:data.commentID;
     if(!replyFormOpened[replyOnID]){
         replyFormOpened[replyOnID]=true
         data.contentID = contentID;

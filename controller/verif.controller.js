@@ -7,6 +7,7 @@ const verifyUser = (req, res) =>{
         return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
     const code = req.body.code;
     verify(id, code).then(result=>{
+        if(!result) return res.status(400).render('error', {error: "Bad Request! Try again"})
         if(result.expired)
             res.render('verif' ,{id, err: `The Code Is Expired`})
         else if(result.notTheCode)
