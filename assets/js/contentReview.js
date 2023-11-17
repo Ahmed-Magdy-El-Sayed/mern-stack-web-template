@@ -1,3 +1,7 @@
+const entries = performance.getEntriesByType("navigation");
+if(entries[0].type == "back_forward")
+    window.location.reload()
+
 socket.on("hiddeContent", contentID=>{
     document.getElementById(contentID)?.remove()
     if(!document.querySelector(".to-select-content").children.length)

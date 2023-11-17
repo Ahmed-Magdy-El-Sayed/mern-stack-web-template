@@ -78,11 +78,11 @@ block content
 
                                             // --------- here you should requiest the details of the content form the author ---------
                                             
-                                        .alert.alert-info.w-100 edit the code in myContent.pug to add the reset of the data that your content use
+                                        .alert.alert-info.w-100 edit the code in the profile.pug file to add the reset of the data that your content use
                                     .modal-footer
                                         if(user.isAuthor)
                                             button.btn.btn-success(type="button", onclick="confirmReviewer(this)") Save
                                         else
                                             button.btn.btn-success(type="submit") Save                                        
 block js 
-    script(src="/js/myContent.js") 
+    script(src="/js/profile.js") 

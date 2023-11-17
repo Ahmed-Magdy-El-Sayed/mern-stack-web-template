@@ -29,6 +29,8 @@ const getMoreContents = (target)=>{//onclick on show more after each group of co
                 </div>
                 `)
         })
+        if(contents.length < 10)
+            target.parentElement.remove()
     }).catch(err=>{
         console.error(err)
     }).finally(()=>{

@@ -27,12 +27,12 @@ router.post('/signup', postUser)
 router.get('/login', isLoggedOut, getLogin)
 router.get('/password-forgot', getForgetPassPage)
 router.post('/password-forgot/send-email', sendRestEmail)
-router.get('/reset/:id/:resetCode', getResetPage)
+router.get('/reset/:id/:resetCode', isLoggedOut, getResetPage)
 router.post('/password-reset', resetPass)
 router.post('/login', checkUser)
-router.get('/profile/:id', getProfile)
+router.get('/profile/:id', isLoggedOut, getProfile)
 
-router.post('/change-profile', multer({
+router.post('/change-profile', isLoggedIn, multer({
     storage: multer.diskStorage({//to save new profile img in images folder
         destination:(req, file, cb)=>{
             cb(null, 'images');

@@ -1,3 +1,7 @@
+const entries = performance.getEntriesByType("navigation");
+if(entries[0].type == "back_forward")
+    window.location.reload()
+
 const createAccountHTML = accounts=>{
     return accounts.map(account=>{
         const accountType = account.isAuthor? "author" : account.isEditor?"editor": account.isAdmin?"admin":"user"

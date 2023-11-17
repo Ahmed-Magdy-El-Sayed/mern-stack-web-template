@@ -23,6 +23,6 @@ module.exports={
             </div>
             `
         };
-        // await transporter.sendMail(mailOptions);
+        await transporter.sendMail(mailOptions);
     }
 }

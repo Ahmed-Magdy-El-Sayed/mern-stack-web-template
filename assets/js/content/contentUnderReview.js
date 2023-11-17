@@ -1,3 +1,7 @@
+const entries = performance.getEntriesByType("navigation");
+if(entries[0].type == "back_forward")
+    window.location.reload()
+
 const contentID = document.querySelector(".content-id").id
 document.querySelector(".content-id").remove()
 const contentAuthor = JSON.parse(document.querySelector(".content-author").dataset.author)
