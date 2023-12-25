@@ -54,10 +54,10 @@ const addContent = (req, res)=>{
         role: user.isAuthor? "author" : user.isEditor? "editor":"admin" 
     }
     pushContent({...req.body, author}).then( ()=>{
-        notifyReviewerWithoutRepeat("there are new contents to review", {contentName: req.body.name, authorName: author.name, root:req.protocol + '://' + req.get('host')})//send notification of new content to review, and not add it if there is previous notification with the same body (their is new content to review) and not readed
+        if(!user.isAdmin && !user.isEditor)
+            notifyReviewerWithoutRepeat("there are new contents to review", {contentName: req.body.name, authorName: author.name, root:req.protocol + '://' + req.get('host')})//send notification of new content to review, and not add it if there is previous notification with the same body (their is new content to review) and not readed
         res.status(201).redirect(req.get('Referrer'))
-        if(user.isEditor || user.isAdmin)
-            incAuthorContentNum(user._id)
+        incAuthorContentNum(user._id)
     }).catch(err=>{
         console.log(err);
         res.status(500).render("error",{user: req.session.user, error: "internal server error"})

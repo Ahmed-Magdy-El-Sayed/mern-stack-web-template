@@ -89,7 +89,7 @@ module.exports ={
                         }else{// if it is verified
                             delete user.verification
                             if(user.deleteByAdmin){// when admin delete an account, it not deleted until the user try to login, so can show him error msg that his account is deleted by admin
-                               return await usersModel.findByIdAndDelete(user._id).then( deleted=>{
+                                return await usersModel.findByIdAndDelete(user._id).then( deleted=>{
                                     if(!deleted) user.error  = true
                                     return user
                                 })
