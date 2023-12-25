@@ -5,15 +5,15 @@ const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     secure: true,
     auth: {
-        user: '',// add your email that will be the sender
-        pass: ''// add your email app password
+        user: 'amcodes55@gmail.com',// add your email that will be the sender
+        pass: 'yuha ylbv xhyp owpm'// add your email app password
     }
 });
 
 module.exports={
     sendEmail: async function (email, notif) {
         const mailOptions = {
-            from: '',//repeat your email again
+            from: 'amcodes55@gmail.com',//repeat your email again
             to: email,
             subject: notif.title,
             html: `
