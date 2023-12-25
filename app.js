@@ -8,7 +8,7 @@ const port = process.env.PORT || 3000
 const {getHome}= require('./controller/content.controller');
 
 const STORE = new sessionStore({
-    uri:"mongodb://localhost:27017/comment",//change database name here and in dbConnect.js in models folder to your database name
+    uri:'mongodb+srv://AhmedMagdy:1YLcRgPR4L0fPQzW@cluster0.kbcoecs.mongodb.net/chatting-web?retryWrites=true',//change database name here and in dbConnect.js in models folder to your database name
     collection:"sessions"
 })
 

@@ -13,7 +13,7 @@
 }
 
 i, a{
-   cursor: pointer; 
+    cursor: pointer; 
 }
 .comment, .reply, .reply-comment, .btn{
     border-radius: 20px !important;
