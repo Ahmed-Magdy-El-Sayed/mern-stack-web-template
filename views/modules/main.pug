@@ -30,7 +30,7 @@ html
                             if((link.title === 'Sign-Up' || link.title === 'Login') && user) 
                             else
                                 li.nav-item
-                                    - let isTheOpened= link.title.split('-').join(' ') === pageTitle||(link.title ==='Home' && pageTitle === 'comments')? 'active' : ''
+                                    - let isTheOpened= link.title.split('-').join(' ') === pageTitle||(link.title ==='Home' && pageTitle === 'codeXpress')? 'active' : ''
                                     a(class=`nav-link ps-0 pe-lg-3 ${isTheOpened}` href = link.href)= link.title
                     if(user)
                         .my-account-info.d-flex.gap-3.justify-content-end.align-items-center
