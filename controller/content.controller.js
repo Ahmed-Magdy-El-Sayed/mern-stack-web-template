@@ -54,7 +54,7 @@ const addContent = (req, res)=>{
         role: user.isAuthor? "author" : user.isEditor? "editor":"admin" 
     }
     pushContent({...req.body, author}).then( ()=>{
-        if(!user.isAdmin && !user.isEditor)
+        if(user.isAuthor)
             notifyReviewerWithoutRepeat("there are new contents to review", {contentName: req.body.name, authorName: author.name, root:req.protocol + '://' + req.get('host')})//send notification of new content to review, and not add it if there is previous notification with the same body (their is new content to review) and not readed
         res.status(201).redirect(req.get('Referrer'))
         incAuthorContentNum(user._id)
