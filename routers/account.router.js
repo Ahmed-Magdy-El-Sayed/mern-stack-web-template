@@ -1,59 +1,49 @@
 const express = require('express')
 const router = express.Router();
-const multer = require('multer');
 
 const {
-    getAccounts, getMoreAccounts, 
-    getMatchedAccounts, getSignup, 
-    getLogin, getProfile,
-    getForgetPassPage,
+    getAccounts,
+    getMoreAccounts,
+    updateSession,
+    getMatchedAccounts,
+    getProfile,
     sendRestEmail, 
-    getResetPage, resetPass, 
+    resetPass,
     deleteAccount, changeProfile, 
-    changeAuthz, updateSessionNotif,
+    changeAuthz,
     clearNotif, readNotif, 
     banAccount, unbanAccount, warningAccount,
-    postUser, checkUser, logout,
+    deleteWarning, postUser, checkUser, logout,
 }= require('../controller/account.controller');
 
 const {
-    isLoggedOut, isLoggedIn, isAdmin
+    isLoggedIn, isAdmin, upload, isLoggedOut
 } = require('../controller/middelwares')
 
 
-router.get('/signup', isLoggedOut, getSignup)
-router.post('/signup', postUser)
+router.post('/signup', isLoggedOut, postUser)
 
-router.get('/login', isLoggedOut, getLogin)
-router.get('/password-forgot', getForgetPassPage)
 router.post('/password-forgot/send-email', sendRestEmail)
-router.get('/reset/:id/:resetCode', isLoggedOut, getResetPage)
 router.post('/password-reset', resetPass)
-router.post('/login', checkUser)
+router.post('/login', isLoggedOut, checkUser)
 router.get('/profile/:id', getProfile)
 
-router.post('/change-profile', isLoggedIn, multer({
-    storage: multer.diskStorage({//to save new profile img in images folder
-        destination:(req, file, cb)=>{
-            cb(null, 'images');
-        },
-        filename:(req, file, cb)=>{
-            cb(null, "/"+Date.now()+ '.' +file.originalname.split('.')[1])
-        }
-    })
-}).single('img'), changeProfile)
+router.put('/profile/update', isLoggedIn, (req, res, next)=>{ 
+    upload.single('profile-img')(req, res, err=>{ err? res.status(401).json({msg: err}) : next()})
+}, changeProfile)
 
-router.get('/', isAdmin, getAccounts)
-router.post('/', isAdmin, getMoreAccounts)
-router.get('/search', isAdmin, getMatchedAccounts)
-router.post("/authzs/change", isAdmin, changeAuthz)
-router.post("/ban", isAdmin, banAccount)
-router.post("/ban/delete", isAdmin, unbanAccount)
-router.post("/warning", isAdmin, warningAccount)
-router.post("/delete", isLoggedIn, deleteAccount)
-router.post("/notif/update", isLoggedIn, updateSessionNotif)
+router.get('/', isLoggedIn, isAdmin, getAccounts)
+router.post('/', isLoggedIn, isAdmin, getMoreAccounts)
+router.put('/update', updateSession)
+router.get('/search', isLoggedIn, isAdmin, getMatchedAccounts)
+router.put("/authzs/change", isLoggedIn, isAdmin, changeAuthz)
+router.post("/ban", isLoggedIn, isAdmin, banAccount)
+router.delete("/ban/delete", isLoggedIn, isAdmin, unbanAccount)
+router.post("/warning", isLoggedIn, isAdmin, warningAccount)
+router.delete("/warning", isLoggedIn, deleteWarning)
+router.delete("/delete", isLoggedIn, deleteAccount)
 router.post("/notif/read", isLoggedIn, readNotif)
-router.post("/notif/clear", isLoggedIn, clearNotif)
+router.delete("/notif/clear", isLoggedIn, clearNotif)
 
 router.get('/logout', isLoggedIn, logout)
 

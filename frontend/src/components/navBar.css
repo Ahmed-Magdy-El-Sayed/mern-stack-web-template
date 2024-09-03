@@ -1,0 +1,14 @@
+.notif .notif-content{
+    left: unset !important; 
+    width: 40vw; 
+    right: 0;
+    max-height:50vh; 
+    overflow-y: overlay;
+}
+
+@media (max-width: 576px){
+    .notif .notif-content{
+        width:90vw;
+        right: -50px;
+    }   
+}

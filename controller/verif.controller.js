@@ -1,31 +1,33 @@
 const {verify, updateVerif, isVerified} = require("../models/users")
 const { sendEmail } = require("./sendEmail");
+const validateId = require("./validateId");
 
-const verifyUser = (req, res) =>{
+const verifyUser = (req, res, next) =>{
     const id = req.body.id;
-    if(!id.match(/^[0-9a-fA-F]{24}$/)) 
-        return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
+    if(!validateId(id)) 
+        return res.status(400).json({msg: "Bad Request! Try Again."})
     const code = req.body.code;
     verify(id, code).then(result=>{
-        if(!result) return res.status(400).render('error', {error: "Bad Request! Try again"})
+        if(!result) return res.status(400).json({msg: "Bad Request! Try Again."})
         if(result.expired)
-            res.render('verif' ,{id, err: `The Code Is Expired`})
+            res.status(410).json({msg:"The Code Is Expired"})
         else if(result.notTheCode)
-            res.render('verif' ,{id, err: `The Code Is Wrong`, expiration: result.expire})
+            res.status(401).json({msg:"The Code Is Wrong"})
         else{
             req.session.user = result
-            res.redirect(301,'/')
+            req.session.userSessionExp = new Date(Date.now()+3*24*60*60*1000)
+            const user = {...req.session.user, role: result.authz.isAdmin? "admin" : result.authz.isEditor? "editor" : result.authz.isAuthor? "author" : "user"};
+            delete user.authz
+            res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp})
+            res.status(200).end()
         }
-    }).catch(err=>{
-        console.log(err)
-        res.status(500).render('error', {error: "Internal server error"})
-    })
+    }).catch(err=> next(err))
 }
 
-const generateCode =(req, res)=>{
+const generateCode =(req, res, next)=>{
     const id = req.params.id;
-    if(!id.match(/^[0-9a-fA-F]{24}$/))
-        return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
+    if(!validateId(id))
+        return res.status(400).json({msg: "Bad Request! Try Again."})
     updateVerif(id).then(result=>{
         const {email, verif} = result
         sendEmail(email, {
@@ -36,23 +38,17 @@ const generateCode =(req, res)=>{
             <p>If you did not sign up, please ignore this email.</p>
             `
         }).then(()=>{
-            res.render('verif', {id, expiration: verif.expire})
-        }).catch(err=>{
-            console.error(err)
-            res.status(500).render('error', {error: "Internal server error"})
-        })
-    }).catch(err=>{
-        console.log(err)
-        res.status(500).render('error', {error: "Internal server error"})
-    })
+            res.status(201).end()
+        }).catch(err=> next(err))
+    }).catch(err=> next(err))
 }
 
-const resendEmail = (req, res)=>{
+const resendEmail = (req, res, next)=>{
     const id = req.params.id;
-    if(!id.match(/^[0-9a-fA-F]{24}$/)) 
-        return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
+    if(!validateId(id)) 
+        return res.status(400).json({msg: "Bad Request! Try Again."})
     isVerified(id).then(result=>{// returns string for verified accounts, object for not verified, or false for error
-        if(result == "verified") res.redirect(301,"/")
+        if(result == "verified") res.status(400).json({msg: "Bad Request! The Account is already verified."})
         else{
             const {email, verif} = result
             sendEmail(email, {
@@ -63,16 +59,10 @@ const resendEmail = (req, res)=>{
                 <p>If you did not sign up, please ignore this email.</p>
                 `
             }).then(()=>{
-                res.render('verif', {id, expiration: verif.expire})
-            }).catch(err=>{
-                console.error(err)
-                res.status(500).render('error', {error: "Internal server error"})
-            })
+                res.status(201).json()
+            }).catch(err=> next(err))
         }
-    }).catch(err=>{
-        console.log(err)
-        res.status(500).render('error', {error: "Internal server error"})
-    })
+    }).catch(err=> next(err))
 }
 
 module.exports= {

@@ -1,149 +1,137 @@
 const express = require('express')
 const app = express();
-const server = require("http").createServer(app)
 const session = require('express-session')
 const sessionStore = require('connect-mongodb-session')(session)
-const port = process.env.PORT || 3000
+const port = process.env.PORT || 4000;
+const cookieParser = require('cookie-parser');
+const {getContents}= require('./controller/content.controller');
+const REACT_APP_URL = "http://localhost:3000"
 
-const {getHome}= require('./controller/content.controller');
-
+"mongodb+srv://AhmedMagdy:1YLcRgPR4L0fPQzW@cluster0.kbcoecs.mongodb.net/codexpress?retryWrites=true"
 const STORE = new sessionStore({
-    uri:'mongodb+srv://AhmedMagdy:1YLcRgPR4L0fPQzW@cluster0.kbcoecs.mongodb.net/chatting-web?retryWrites=true',//change database name here and in dbConnect.js in models folder to your database name
+    uri:'mongodb://localhost:27017/comment',//change database name here and in dbConnect.js in models folder to your database name
     collection:"sessions"
 })
 
-app.use(express.static('./assets'))
+app.use((req, res, next)=>{
+    res.header("Access-Control-Allow-Origin", REACT_APP_URL)
+    res.header('Access-Control-Allow-Headers', "Content-Type");
+    res.header('Access-Control-Allow-Credentials', true);
+    res.header('Access-Control-Allow-Methods', "GET, POST, PUT, DELETE");
+    next();
+})
+
 app.use(express.static('./images'))
 app.use(express.urlencoded({extended:false}))
 app.use(express.json())
+app.use(cookieParser())
 app.use(session({
     secret:'ed0d1d5cbbb81661fd20d8e8994238d6f3baa419bddbaa6d1bbe3aa9f78b6f2e',//change the secret string here
-    cookie: { maxAge: 3 * 24 * 60 * 60 * 1000 },
+    cookie: {maxAge: 3*24*60*60*1000},//changing the maxAge value requires changing in account.control line 83 & verif.control line 18
     resave: true,
     saveUninitialized: false,
     store:STORE
 }))
-
-/* set pugJS and the files path */
-app.set('view engine','pug')
-app.set('views','./views')
+app.use((err, req, res, next)=>{
+    console.log(err);
+    res.status(500).json({msg:"Internal server error"})
+})
 
 /* set the routs */
-app.get('/', getHome)
+app.get('/', getContents)
 app.use('/account',require('./routers/account.router'))
 app.use('/verify',require('./routers/verif.router'))
 app.use('/content',require('./routers/content.router'))
 
-app.all('*',(req,res)=>{res.status(404).render("error",{err:'Page not found!'})})
+app.all('*',(req,res)=>{res.status(404).json({msg:'Route Not Found!'})})
 
-
-/* set socket.io to update the pages without reload it */
+const http = require("http");
+const server = http.createServer(app)
+/* set socket.io to update the pages without refresh it */
 const Server = require("socket.io").Server
-const io = new Server(server)
-
-io.onlineUsers = {}
-io.onlineReviewers = {}
+const io = new Server(server,{
+    cors: {
+        origin: REACT_APP_URL
+    }
+});
 
 io.on("connection", socket=>{
     /* start global events */
-    socket.on('makeRoom',id=>{
+    socket.on('makeRoom',(id, role)=>{
         socket.join(id);
+        socket.join(role) // role: user || author || editor || admin
     })
 
-    socket.on('changeOnlineUsers',id=>{
-        io.onlineUsers[id] = true;
-        socket.on("disconnect",()=>{
-            delete io.onlineUsers[id];
-            io.emit('onlineUsers',io.onlineUsers)// the listener in assets/js/mainForReviewers.js
-        })
-        io.emit('onlineUsers',io.onlineUsers)
+    socket.on("notifyUser", id=>{
+        io.to(id).emit("notify")
     })
-
-    socket.on('changeOnlineReviewers',id=>{
-        io.onlineReviewers[id] = true; // add the reviewer to the object 
-        socket.on("disconnect",()=>{
-            delete io.onlineReviewers[id];
-            io.emit('onlineReviewers',io.onlineReviewers)
-        })
-        io.emit('onlineUsers',io.onlineUsers) // send the new reviewer the onlineUsers.js
-    })
-
-    socket.on("notifyUser", (id, notif)=>{
-        io.to(id).emit("noify", notif)// the listener in assets/js/mainForLoggedIn.js
-    })
-
     /* end global events */
     
     /* start accounts control events */
     socket.on('applyWarning',(id, reason)=>{
-        if(io.sockets.adapter.rooms.get(id)){
-            io.to(id).emit("warning", reason)
-            socket.emit("userOnline")// the listener in assets/js/accountControl.js
-        }else
-            socket.emit("userOffline")// the same
+        io.to(id).emit("warning", reason)
     })
-    socket.on('logoutUser',(id)=>{// when ban or delect account
-        io.to(id).emit("changesInAccount")// the listener in assets/js/mainForLoggedIn.js
+    socket.on('logoutUser',(id)=>{
+        io.to(id).emit("forceLogout")
     })
     socket.on('changeAuthorization',id=>{
-        io.to(id).emit("changesInAccount")
+        io.to(id).emit("forceLogout")
     })
     /* end accounts control events */
 
-    /* start review contents events */
-    socket.on("confirmReviewers", ()=>{
-        Object.keys(io.onlineReviewers).forEach(id=>{
-            io.to(id).emit("newContent")// the listener in assets/js/mainForReviewers
-        })
+    /* start review content events */
+    socket.on("confirmReviewers", content=>{
+        socket.to(["editor", "admin"]).emit("newContentToReview", content)
+        socket.to(["editor", "admin"]).emit("notify", {msg: "there is new content to review", href:"/content/control", num: 1, isReaded: false})
     })
     socket.on('hiddeContent', contentID=>{
-        Object.keys(io.onlineReviewers).forEach(reviewer=>{
-            socket.to(reviewer).emit("hiddeContent", contentID)// the listener in assets/js/contentReview.js
-        })
+        socket.to(["editor", "admin"]).emit("hiddeContent", contentID)
     })
     socket.on('showContent', content=>{
-        Object.keys(io.onlineReviewers).forEach(reviewer=>{
-            socket.to(reviewer).emit("showContent", content)// the listener in assets/js/contentReview.js
-        })
+        socket.to(["editor", "admin"]).emit("showContent", content)
     })
-    socket.on('sendApproval',(userID, contentID, contentName)=>{
-        io.to(userID).emit("approveContent", contentID, contentName)// the listener in assets/js/content/contentUnderReview.js
+    socket.on('sendApproval',(userID, contentID)=>{
+        io.to(userID).emit("approveContent", contentID)
     })
-    socket.on('sendRejection',(userID, contentID, contentName, reason)=>{
-        io.to(userID).emit("rejectContent", contentID, contentName, reason)// the listener in assets/js/content/contentUnderReview.js
+    socket.on('sendRejection',(userID, contentID)=>{
+        io.to(userID).emit("rejectContent", contentID)
     })
-    /* end review contents events */
+    /* end review content events */
 
-    /* start update comments events */
-    // the listeners of all following events are in assets/js/content/commentSocket.js
-    socket.on("addComment",content=>{
-        io.emit("addCommentIn"+content._id, content)
+    /* start comment events */
+    socket.on("addComment", (contentID, comment)=>{
+        io.emit("addCommentIn"+contentID, comment)
     })
-    socket.on("addReply",content=>{
-        io.emit("addReplyIn"+content._id, content)
+    socket.on("addReply", (data, newReply)=>{console.log("tessttt")
+        io.emit("addReplyIn"+data.contentID, data.commentID, newReply)
+        io.to(newReply.replyToUserID).emit("notify")
     })
+
     socket.on("updateComment",data=>{
         io.emit("updateCommentIn"+data.contentID, data)
     })
-    socket.on("updateReply",data=>{
-        io.emit("updateReplyIn"+data.contentID, data)
+    socket.on("updateReply", (data, reply)=>{
+        io.emit("updateReplyIn"+data.contentID, data.commentID, data.replyToID, reply)
     })
+
     socket.on("deleteComment",data=>{
         io.emit("deleteCommentIn"+data.contentID, data.commentID)
     })
-    socket.on("deleteReply",data=>{
-        io.emit("deleteReplyIn"+data.contentID, data.replyID)
+    socket.on("deleteReply",(data, replyID)=>{
+        io.emit("deleteReplyIn"+data.contentID, data.commentID, data.replyToID, replyID)
     })
-    socket.on("addLove",(data, authorImg)=>{
-        io.emit("addLoveIn"+data.contentID, data.replyID?data.replyID:data.commentID, authorImg)
+
+    socket.on("addLove", (data, replyID) =>{
+        io.emit("addLoveIn"+data.contentID, data.commentID, data.replyToID, replyID)
     })
-    socket.on("deleteLove",data=>{
-        io.emit("deleteLoveIn"+data.contentID, data.replyID?data.replyID:data.commentID)
+    socket.on("deleteLove",(data, replyID)=>{
+        io.emit("deleteLoveIn"+data.contentID, data.commentID, data.replyToID, replyID)
     })
-    socket.on("react",(data, react)=>{
-        io.emit("reactIn"+data.contentID, data.replyID?data.replyID:data.commentID, react)
+
+    socket.on("react",(data, updatedComment)=>{
+        io.emit("reactIn"+data.contentID, data.commentID, data.replyToID, updatedComment)
     })
-    /* start update comments events */
+    /* end comment events */
 })
 
 /* start the server */

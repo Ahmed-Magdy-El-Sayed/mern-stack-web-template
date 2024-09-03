@@ -1,21 +1,24 @@
-const { 
-    createUser, authUser, createResetCode, resetAccountPass, 
-    getAuthorData, getFrist10Accounts, getAccountsByRole, getAccountsByName, 
-    banUser, unbanUser, warningUser, 
-    changeUserAuthz, updateProfile, deleteUser, 
-    clearUserNotif, deleteUserByAdmin, addNotif, updateNotif,
-    getReviewersNotifs, markNotifReaded
-} = require('../models/users');
-const {getContentByAuthorId} = require("../models/contents")
+const userModel= require('../models/users');
+const {getContentByAuthorId, updateContentAuthorImg} = require("../models/contents")
 const {sendEmail} = require('./sendEmail');
 
-const crypto = require("crypto")
+const crypto = require("crypto");
+const validateId = require('./validateId');
+const sharp = require("sharp");
+const path = require("path");
+const { unlink, existsSync } = require('fs');
 
-/* start the functions for signup page */
-const getSignup =(req,res)=>{// load the page
-    res.render('signup')
+const updateSession = (req, res, next)=>{
+    userModel.getUser(req.session.user._id).then(newUser=>{
+        req.session.user = newUser;
+        const user = {...newUser, role: newUser.authz.isAdmin? "admin" : newUser.authz.isEditor? "editor" : newUser.authz.isAuthor? "author" : "user"};
+        delete user.authz;
+        res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp})
+        res.status(200).end()
+    }).catch(err=> next(err))
 }
 
+/* start the functions for signup page */
 const postUser = (req,res) =>{//creat the account
     const user = req.body;
     const code = crypto.randomBytes(3).toString('hex');
@@ -24,8 +27,7 @@ const postUser = (req,res) =>{//creat the account
         code: code,
         expire: expiration
     }
-    user.img="/user.jpg"
-    createUser(user).then(result=>{//the function returns object for the user id, string for already used name/email, or throw error
+    userModel.createUser(user).then(result=>{//the function returns object for the user id, string for already used name/email, or throw error
         if(result.id)
             sendEmail(user.email, {
                 title:"Email Verification",
@@ -35,42 +37,24 @@ const postUser = (req,res) =>{//creat the account
                 <p>If you did not sign up, please ignore this email.</p>
                 `
             }).then(()=>{
-                res.render('verif',{id: result.id, expiration})
-            }).catch(err=>{
-                console.error(err)
-                res.status(500).render('error',{error: "internal server error"});
-            })
+                res.status(201).json({id: result.id, expiration})
+            }).catch(err=> next(err))
         else
-            res.status(400).render('signup', {error: result}) 
-    }).catch(err=>{
-        console.error(err)
-        res.status(500).render('error',{error: "internal server error"});
-    })
+            res.status(400).json({msg: result}) 
+    }).catch(err=> next(err))
 }
 /* end the functions for signup page */
 
 /* start the functions for login page */
-let loginErr;
-let ban;
-const getLogin =(req,res)=>{//load the page
-    res.render('login',{
-        error: loginErr,
-        ban
-    })
-    loginErr = null;
-    ban = null;
-}
-
-const checkUser = async (req, res) =>{//log in the user
+const checkUser = async (req, res, next) =>{//log in the user
     const user = req.body;
-    authUser(user).then(async account=>{
+    userModel.authUser(user).then(async account=>{
         if(typeof account === 'string') {// if get account failed
-            loginErr = account;
-            res.redirect(301,'/account/login');
+            res.status(401).json({msg: account});
         }else {// if get account success
             if(account.verif){// if the verification object not null, then the account is not verified
                 if(account.resend) {// if need to resend the code
-                    sendEmail(user.email, {
+                    sendEmail(account.email, {
                         title:"Email Verification",
                         content:`
                         <p>Your verification code is: <strong>${account.verif.code}</strong></p>
@@ -78,181 +62,206 @@ const checkUser = async (req, res) =>{//log in the user
                         <p>If you did not sign up, please ignore this email.</p>
                         `
                     }).then(()=>{
-                        res.render('verif',{id: account.id, expiration: account.verif.expire});
-                    }).catch(err=>{
-                        console.error(err)
-                        res.status(500).render('error', {error: "Internal server error"})
-                    })
-                }else res.render('verif',{id: account.id, expiration: account.verif.expire});
+                        res.status(200).json({case:"verify", id: account.id, expiration: account.verif.expire});
+                    }).catch(err=> next(err))
+                }else res.status(200).json({case:"verify", id: account.id, expiration: account.verif.expire});
+
             }else{// if the account is verified
                 if(account.deleteByAdmin){
                     if(account.error){
-                        loginErr = "Something went wrong. Try again"
-                        res.redirect(301,'/account/login');
+                        res.status(500).json({msg:"Something went wrong. Try again"});
                     }else{
-                        loginErr = "Your account was deleted by the admin"
-                        res.redirect(301,'/account/login');
+                        res.status(200).json({case:"deleted", msg:"Your account was deleted by the admin"});
                     }
-                }else if(account.ban.ending){//check ban exist by check the value of one of ban object attributes as the account.ban is object contain by default two null values attributes, so in all cases the object retrun true
-                    ban = account.ban // ban variable is added when login page is rendered so can alert the user that he is banned
-                    res.redirect(301,'/account/login');
+                }else if(account.ban.current?.ending){//check ban exist by check the value of one of ban object attributes, as the account.ban.current is object containing by default two null values attributes. so in all cases the object retrun true
+                    res.status(200).json({case:"banned", ban:account.ban.current});
                 }else{
-                    req.session.warning = account.warning.length? account.warning : null// the same as ban variable but added to home page after login success
-                    delete account.warning // as it will be shown once, so it shouldn't be stored in the user session
-                    req.session.user = account
-                    res.redirect(301,'/');
+                    const newWarning = account.warning.current.length? account.warning.current : null;
+                    const authz = account.authz;
+                    delete account.warning
+                    req.session.user = {...account};
+                    req.session.userSessionExp = new Date(Date.now()+3*24*60*60*1000)
+                    const user = {...req.session.user, role: authz.isAdmin? "admin" : authz.isEditor? "editor" : authz.isAuthor? "author" : "user"};
+                    delete user.authz;
+                    delete user.notifs
+                    res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp})
+                    res.status(200).json({
+                        user,
+                        warnings: newWarning
+                    });
                 }
             }
         }
-    }).catch(err=>{
-        console.error(err)
-        res.status(500).render('error',{error: "internal server error"});
-    })
+    }).catch(err=> next(err))
 }
 
-let resetPageAlert;
-const getForgetPassPage = (req, res)=>{
-    res.render('forgetPass', {alert: resetPageAlert})
-    resetPageAlert = null
-}
-const sendRestEmail =(req, res)=>{
+const sendRestEmail =(req, res, next)=>{
     const email = req.body.email
-    createResetCode(email).then((result)=>{
+    userModel.createResetCode(email).then((result)=>{
         if(typeof result == "string"){
-            resetPageAlert = {msg: result, type: "danger"}
-            res.redirect(req.get('Referrer'))
+            res.status(401).json({msg: result})
         }
-        else{
+        else{console.log(req.get('origin'))
             sendEmail(email, {
                 title: "Reset Your Account Password",
                 content: `
-                <h4>If you forgot your password <a href="${req.protocol + '://' + req.get('host')}/account/reset/${result.id}/${result.resetCode}">click here</a> to reset it</h4>
+                <h4>If you forgot your password <a href="${req.get('origin')}/account/reset/${result.id}/${result.resetCode}">click here</a> to reset it</h4>
                 `
             })
-            resetPageAlert = {msg: "The reset link sent to your email", type:"success"}
-            res.redirect(req.get('Referrer'))
+            res.status(201).end()
         }
-    }).catch(err=>{
-        console.error(err)
-        res.status(500).render("error",{error:"Internal server error"})
-    })
+    }).catch(err=> next(err))
 }
 
-const getResetPage = (req, res)=>{
-    res.render("resetPass", {...req.params})
-}
-
-const resetPass= (req, res)=>{
-    resetAccountPass(req.body).then(result=>{
+const resetPass= (req, res, next)=>{
+    userModel.resetAccountPass(req.body).then(result=>{
         result?
-            res.redirect("/account/login")
+            res.status(201).end()
         :
-            res.status(400).render("error", {error: "Bad Request! Try Again"})
-    }).catch(err=>{
-        console.error(err)
-        res.status(500).render('error',{error: "internal server error"});
-    })
+            res.status(400).json({msg:"Bad Request! Try Again."})
+    }).catch(err=> next(err))
 }
 /* end the functions for login page */
 
-/* start the function of the main bar */
-const changeProfile = (req, res)=>{
-    updateProfile({filename:req.file?.filename,...req.body, userID: req.session.user}).then(value=>{
-        if(value){
-            if(value.err){
-                profileEditErr = value.err
-                res.status(301).redirect("/") 
-                return null
-            }
-            req.session.user = {...req.session.user, img: value};
-            req.session.save(()=>{
-                res.redirect(req.get('Referrer'))
+/* start the function of the mainbar */
+const changeProfile = async (req, res, next)=>{
+    const imageName = req.file?.originalname.split(".").slice(1).join(".");
+    let continueToNext;
+    if(imageName)//next resizing the image to remove malicious
+        await sharp(req.file.path)
+        .resize(500,500, {fit: "inside"}).toFile(path.join(__dirname, "..", "images", "account", imageName))
+        .then(()=>{
+            unlink(req.file.path, err=>{
+                if(err)
+                    throw err
             })
-        }else res.redirect(req.get('Referrer'))
-    }).catch(err=>{
-        console.log(err)
-        res.status(500).render("error",{user: req.session.user, error: "internal server error"})
-    })
+            continueToNext = true
+        })
+        .catch(err=>{
+            next(err)
+            continueToNext = false;
+        })
+    else continueToNext = true
+
+    if(continueToNext)
+        userModel.updateProfile({imageName: imageName, ...req.body, userID: req.session.user._id}).then(value=>{
+            if(value){
+                if(value.err){
+                    res.status(401).json({msg: value.err}) 
+                    return null
+                }
+                const imgPath = path.join(__dirname, "..", "images", "account", req.session.user.img);
+                if(req.session.user.img !== "user.jpg" && existsSync(imgPath))
+                    unlink(imgPath, err=>{
+                        if(err)
+                        throw err
+                    })
+                req.session.user = {...req.session.user, img: value};
+                const authz = req.session.user.authz;
+                if(Object.values(authz).includes(true))
+                    updateContentAuthorImg(req.session.user._id, value)
+                req.session.save(()=>{
+                    const user = {...req.session.user, role: authz.isAdmin? "admin" : authz.isEditor? "editor" : authz.isAuthor? "author" : "user"};
+                    delete user.authz;
+                    delete user.notifs;
+                    res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp})
+                    res.status(200).end()
+                })
+            }else res.status(200).end()
+        }).catch(err=> next(err))
+    
 }
 
 const logout =(req,res)=>{
     req.session.destroy(err=>{
-        if(err) return console.error(err) 
+        if(err) {
+            console.error(err) 
+            return res.status(500).json({msg:"Failed to logout"})
+        }
+        res.cookie("user", "", {expires: new Date("Thu, 01 Jan 1970 00:00:01 GMT")})
+        res.status(201).end()
     });
-    res.status(301).redirect('/account/login')
 }
 
-const deleteAccount = (req, res)=>{// button in update profile option
+const deleteAccount = (req, res, next)=>{
     const user = req.session.user;
-    if(req.body.userID && user.isAdmin){//if the admin who delete the account
-        if(!req.body.userID.match(/^[0-9a-fA-F]{24}$/))
-            return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
-        deleteUserByAdmin(req.body.userID).then(()=>{
+    if(req.body.userID && user.authz.isAdmin){//if the admin request to delete the account
+        if(!validateId(req.body.userID))
+            return res.status(400).json({msg:"Bad Request! Try Again."})
+        userModel.deleteUser(req.body.userID).then(user=>{
+            if(!user){
+                res.status(400).json({msg:"Account not found!"})
+                return null
+            }
             res.status(201).end()
             sendEmail(req.body.email, {
                 title:"Your Account Was Deleted",
-                content:`
-                <p>the admin deleted your account</p>
-                `
+                content:`<p>The admin deleted your account</p>`
             })
-        }).catch(err=>{
-            console.log(err)
-            res.status(500).render("error",{user: req.session.user, error: "internal server error"})
-        })
-    }else{//the user who delete his account
+            const imgPath = path.join(__dirname, "..", "images", "account", user.img);
+            if(user.img !== "user.jpg" && existsSync(imgPath))
+                unlink(imgPath, err=>{
+                    if(err)
+                        throw err
+                })
+        }).catch(err=> next(err))
+    }else{//the user request to delete his account
+        const oldImage = req.session.user.img;
         req.session.destroy(err=>{
             if(err){
-                res.status(500).render("error",{user: req.session?.user, error: "internal server error"})
+                res.status(500).json({msg:"Internal server error"})
                 return console.error(err)
             } 
-            deleteUser(user._id).then(result=>{
-            if(result == -1) res.status(400).render("error",{user: req.session?.user, error: "Account not found!"})
-            else {
-                res.redirect(301,"/")
-                sendEmail(user.email, {
-                    title:"Your Account Was Deleted",
-                    content:`
-                    <p>The account was deleted successfully</p>
-                    `
-                })
+            userModel.deleteUser(user._id).then(result=>{
+                if(!result) res.status(400).json({msg:"Account not found!"})
+                else{
+                    res.cookie("user", "", {expires: new Date("Thu, 01 Jan 1970 00:00:01 GMT")})
+                    res.status(201).end()
+                    sendEmail(user.email, {
+                        title:"Your Account Was Deleted",
+                        content:`<p>The account was deleted successfully</p>`
+                    })
+                    const imgPath = path.join(__dirname, "..", "images", "account", oldImage);
+                    if(oldImage !== "user.jpg" && existsSync(imgPath))
+                        unlink(imgPath, err=>{
+                            if(err)
+                                throw err
+                        })
                 }
-            }).catch(err=>{
-                console.log(err)
-                res.status(500).render("error",{user: req.session?.user, error: "internal server error"})
-            })
+            }).catch(err=> next(err))
         });
     }
 }
-/* end the functions of main bar */
+/* end the functions of mainbar */
 
-const getProfile = async (req, res)=>{//load myContent page
+const getProfile = async (req, res, next)=>{//get profile page data
     const profileUserID = req.params.id;
-    if(!(profileUserID.match(/^[0-9a-fA-F]{24}$/)))
-        return res.status(400).render('error', {error: "Bad Request! try again."})
+    if(!validateId(profileUserID))
+        return res.status(400).json({msg:"Bad Request! Try Again."})
     
     const sessionUser = req.session.user;
     let contents;
     if(profileUserID == String(sessionUser?._id)){
-        if(sessionUser.isAdmin || sessionUser.isEditor || sessionUser.isAuthor){
+        if(sessionUser.authz.isAdmin || sessionUser.authz.isEditor || sessionUser.authz.isAuthor){
             contents = await getContentByAuthorId(sessionUser._id).then(contents=>{
                 const groupedContents = {underReview:[], reviewed: []};
                 contents.forEach(content => {
                     groupedContents[content.isUnderReview? "underReview" : "reviewed"].push(content)
                 });
                 return groupedContents
-            }).catch(err=>{console.log(err);
-                res.status(500).render("error",{user: req.session.user, error: "internal server error"})
+            }).catch(err=>{
+                next(err)
                 return "error"
             });
         }
         if(contents == "error")
             return null
-        res.render('profile',{contents, user: sessionUser})
+        res.status(200).json({contents, isAuthor: sessionUser.authz.isAuthor})
     }else{
-        getAuthorData(profileUserID).then(async user=>{
-            if(!user) return res.status(400).render('error', {error: "Bad Request! try again."})
+        userModel.getAuthorData(profileUserID).then(async user=>{
+            if(!user) return res.status(400).json({msg:"Bad Request! Try Again."})
             
-            if(user.isAdmin || user.isEditor || user.isAuthor){
+            if(user.authz.isAdmin || user.authz.isEditor || user.authz.isAuthor){
                 contents = await getContentByAuthorId(profileUserID).then(contents=>{
                     let reviewedContents = [];
                     contents.forEach(content => {
@@ -260,61 +269,60 @@ const getProfile = async (req, res)=>{//load myContent page
                             reviewedContents.push(content)
                     });
                     return reviewedContents
-                }).catch(err=>{console.log(err);
-                    res.status(500).render("error",{user: req.session.user, error: "internal server error"})
+                }).catch(err=>{
+                    next(err)
                     return "error"
                 });
             }
             if(contents == "error")
                 return null
-            res.render('profile',{contents, author: user, user: sessionUser})
-        }).catch(err=>{console.log(err);
-            res.status(500).render("error",{user: req.session.user, error: "internal server error"})
-        });
+            res.status(200).json({contents, profileOwner: user, isAuthor: sessionUser.authz.isAuthor})
+        }).catch(err=> next(err));
     }
 }
 
 /* start the functions of accountControl page */
-const getAccounts = (req, res)=>{// load the page
-    getFrist10Accounts().then(accounts=>{
-        res.render('accountsControl', {accounts, user: req.session.user})
-    }).catch(err=>{
-        console.log(err);
-        res.status(500).render("error",{user: req.session.user, error: "internal server error"})
-    })
+const getAccounts = (req, res, next)=>{
+    userModel.getFrist10Accounts().then(accounts=>{
+        res.status(200).json(accounts)
+    }).catch(err=> next(err))
 }
 
-
-const getMoreAccounts = (req, res)=>{//when the admin click on show more under the accounts sections
+const getMoreAccounts = (req, res, next)=>{
     const skip = parseInt(req.body.skip)
     const accountType = req.body.accountType
-    getAccountsByRole({accountType, skip}).then(accounts=>{
+    userModel.getAccountsByRole({accountType, skip}).then(accounts=>{
         res.status(200).json(accounts)
-    }).catch(err=>{
-        console.log(err);
-        res.status(500).render("error",{user: req.session.user, error: "Internal server error"})
-    })
+    }).catch(err=> next(err))
 }
 
-const getMatchedAccounts =(req, res)=>{//when admin search for specific account
-    getAccountsByName(req.query.name).then(accounts=>{
+const getMatchedAccounts =(req, res, next)=>{
+    userModel.getAccountsByName(req.query.name).then(accounts=>{
+        const groupedAccs = {users:[], authors:[], editors:[], admins:[]};
         if(req.query.name.length > 1){
-            const matchedAccounts1 = accounts.filter(acc=>acc.name.match(new RegExp("^"+req.query.name,"gi")))
-            const matchedAccounts2 = accounts.filter(acc=>acc.name.match(new RegExp(".+"+req.query.name,"gi")))
-            const notMatchedAccounts = accounts.filter(acc=>!acc.name.match(new RegExp(req.query.name,"gi")))
-            accounts = matchedAccounts1.concat(matchedAccounts2).concat(notMatchedAccounts)
+            const mostMatched = accounts.filter(acc=>acc.name.match(new RegExp("^"+req.query.name,"gi")))
+            const lessMatched = accounts.filter(acc=>acc.name.match(new RegExp(".+"+req.query.name,"gi")))
+            const remindedAccounts = accounts.filter(acc=>!acc.name.match(new RegExp(req.query.name,"gi")))
+            accounts = mostMatched.concat(lessMatched).concat(remindedAccounts)// we made 3 filters to make the most relevent accounts at the first
         }
-        res.status(200).json(accounts)
-    }).catch(err=>{
-        console.log(err);
-        res.status(500).render("error",{user: req.session.user, error: "Internal server error"})
-    })
+        accounts.forEach(acc=>{
+            if(acc.authz.isAdmin)
+                groupedAccs.admins.push(acc)
+            else if(acc.authz.isEditor)
+                groupedAccs.editors.push(acc)
+            else if(acc.authz.isAuthor)
+                groupedAccs.authors.push(acc)
+            else
+                groupedAccs.users.push(acc)
+        })
+        res.status(200).json(groupedAccs)
+    }).catch(err=> next(err))
 }
 
-const changeAuthz= (req, res)=>{
-    if(!req.body.userID.match(/^[0-9a-fA-F]{24}$/))
-        return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
-    changeUserAuthz({...req.body, notif:{
+const changeAuthz= (req, res, next)=>{
+    if(!validateId(req.body.userID))
+        return res.status(400).json({msg:"Bad Request! Try Again."})
+    userModel.changeUserAuthz({...req.body, notif:{
             msg:"The admin change your authorization to be "+req.body.authz,
             href:""
         }
@@ -322,147 +330,123 @@ const changeAuthz= (req, res)=>{
         res.status(201).end()
         sendEmail(req.body.email, {
             title:"Changing In The Authoriziation",
-            content:`<p>The admin change your account authorization to be ${req.body.authz}</p>`
+            content:`<p>The admin changed your account authorization to be ${req.body.authz}</p>`
         })
-    }).catch(err=>{
-        console.log(err);
-        res.status(500).end()
-    })
+    }).catch(err=> next(err))
 }
 
-const warningAccount = (req, res)=>{
-    if(!req.body.userID.match(/^[0-9a-fA-F]{24}$/))
-        return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
-    warningUser(req.body).then(()=>{
+const warningAccount = (req, res, next)=>{
+    if(!validateId(req.body.userID))
+        return res.status(400).json({msg:"Bad Request! Try Again."})
+    userModel.warningUser(req.body).then(()=>{
         res.status(201).end()
         sendEmail(req.body.email, {
             title:"Admin Warning",
             content:`<h5>The admin sent warning that: ${req.body.reason}</h5>`
         })
-    }).catch(err=>{
-        console.log(err);
-        res.status(500).end()
-    })
+    }).catch(err=> next(err))
 }
 
-const banAccount = (req, res)=>{
-    if(!req.body.userID.match(/^[0-9a-fA-F]{24}$/))
-        return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
-    banUser(req.body).then(()=>{
+const deleteWarning = (req, res, next)=>{
+    userModel.removeWarning({userID: req.session.user._id, warning: req.body.warning}).then(()=>{
+        res.status(201).end()
+    }).catch(err=> next(err))
+}
+
+const banAccount = (req, res, next)=>{
+    if(!validateId(req.body.userID))
+        return res.status(400).json({msg:"Bad Request! Try Again."})
+    userModel.banUser(req.body).then(()=>{
         res.status(201).end()
         const banEndTime = new Date(new Date().getTime()+Math.floor(req.body.duration)*24*60*60*1000).toLocaleString("en")
         sendEmail(req.body.email, {
             title:"Your Account Is Banned",
             content:`
-            <h5>your account is banned because: ${req.body.reason}</h5>
+            <h5>Your account is banned because: ${req.body.reason}</h5>
             <p>the ban ending in ${banEndTime}</p>
             `
         })
-    }).catch(err=>{
-        console.log(err);
-        res.status(500).end()
-    })
+    }).catch(err=> next(err))
 }
 
-const unbanAccount = (req, res)=>{
-    if(!req.body.userID.match(/^[0-9a-fA-F]{24}$/))
-        return res.status(400).render('error', {error: "Bad Request! try again."})//send error, if the recieved id is invaild
-    unbanUser(req.body).then(()=>{
+const unbanAccount = (req, res, next)=>{
+    if(!validateId(req.body.userID))
+        return res.status(400).json({msg:"Bad Request! Try Again."})
+    userModel.unbanUser(req.body).then(()=>{
         res.status(201).end()
         sendEmail(req.body.email, {
             title:"Your Account Is Unbanned",
             content:`
-            <h5>The admin unban your account and you can login now</h5>
+            <h5>The admin unbanned your account and you can login now</h5>
             `
         })
-    }).catch(err=>{
-        console.log(err);
-        res.status(500).end()
-    })
+    }).catch(err=> next(err))
 }
 /* end the functions of accountControl page */
 
 /* start the functions for notifications */
-const notifyReviewerWithoutRepeat = (notifMsg, data)=>{// notify the admins and the editors that there is new content to review when author submit content
-    getReviewersNotifs().then(reviewers=>{
+const uniqueNotifyReviewers = (notifMsg, data)=>{
+    userModel.getReviewersNotifs().then(reviewers=>{
         reviewers.forEach(async reviewer=>{
             sendEmail(
                 reviewer.email, 
                 {
                     title:"New Content to review", 
-                    content:`<p>${data.authorName} submit new content (${data.contentName}) that need to review <a href='${data.root}/content/review'>click here</a> to go to content review page</p>`
+                    content:`<p>${data.authorName} submit new content (${data.contentName}) that need to review <a href='${data.root}/content/control'>click here</a> to go to content review page</p>`
                 }
             )
-            if(reviewer.notifs.length){
-                let notifyExist = false
-                reviewer.notifs.forEach(async notif=>{
-                    if(!notif.isReaded && notif.msg == notifMsg){
-                        notifyExist = true;
-                    }
-                })
-                if(notifyExist)
-                    await updateNotif({userID: reviewer._id, notif:{msg: notifMsg}}).catch(err=>{
-                        console.log(err);
+            try {
+                if(reviewer.notifs.length){
+                    let notifyExist = false
+                    reviewer.notifs.forEach(async notif=>{
+                        if(!notif.isReaded && notif.msg == notifMsg){
+                            notifyExist = true;
+                        }
                     })
-                else
-                    await addNotif({userID: reviewer._id, notif:{msg: notifMsg, href: "/content/review"}}).catch(err=>{
-                        console.log(err);
-                    })
-            }else
-                await addNotif({userID: reviewer._id, notif:{msg: notifMsg, href: "/content/review"}}).catch(err=>{
-                    console.log(err);
-                })
+                    if(notifyExist)
+                        await userModel.updateNotif({userID: reviewer._id, notif:{msg: notifMsg}})
+                    else
+                        await userModel.addNotif({userID: reviewer._id, notif:{msg: notifMsg, href: "/content/control"}})
+                }else
+                    await userModel.addNotif({userID: reviewer._id, notif:{msg: notifMsg, href: "/content/control"}})
+                    
+            } catch(err){
+                console.log(err);
+            }
         })
-    }).catch(err=>{
-        console.log(err);
-    })
+    }).catch(err=> next(err))
 }
 
-const updateSessionNotif = (req, res)=>{//for online users, save the notification to the session. so no need to call the data from database
-    const user =req.session.user;
-    user.notifs = req.body.notifs
-    user.notifsNotReaded++
-    res.end()
-}
-
-const clearNotif = (req, res)=>{// if user click on clear notification option in the buttom of notification section
-    clearUserNotif(req.session.user._id).then(()=>{
-        req.session.user.notifs = []
-        res.status(201).end()
-    }).catch(err=>{console.log(err);
-        res.status(500).end("internal server error")
-    })
-}
-
-const readNotif = (req, res)=>{//when open the notifications
+const clearNotif = (req, res, next)=>{
     const user = req.session.user;
-    markNotifReaded(user._id).then(()=>{
-        const readedNum = user.notifs.length - user.notifsNotReaded
-        const editedNotif = user.notifs.splice(-readedNum).map(notif=>{notif.isReaded = true; return notif})
-        user.notifsNotReaded = 0
-        user.notifs= user.notifs.map(notif=>{
-            notif.isReaded=true;
-            return notif
-        })
-        user.notifs.push(...editedNotif)
+    userModel.clearUserNotif(user._id).then(()=>{
         res.status(201).end()
-    }).catch( err=>{
-        console.log(err)
-        res.status(500).end("internal server error")
-    })
+    }).catch(err=> next(err))
+}
+
+const readNotif = (req, res, next)=>{//when open the notifications
+    userModel.markNotifReaded(req.session.user._id).then(({notifs})=>{
+        req.session.user.notifsNotReaded = 0
+        const authz = req.session.user.authz;
+        req.session.save(()=>{
+            const user = {...req.session.user, role: authz.isAdmin? "admin" : authz.isEditor? "editor" : authz.isAuthor? "author" : "user"};
+            delete user.authz;
+            res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp})
+            res.status(201).json(notifs)
+        })
+    }).catch( err=> next(err))
 }
 /* end the functions for notifications */
 
 module.exports={
-    getSignup, getLogin, 
+    updateSession,
     getProfile,
-    getForgetPassPage, sendRestEmail,
-    getResetPage, resetPass,
-    postUser, checkUser,
+    sendRestEmail,
+    resetPass, postUser, checkUser,
     changeProfile, logout, 
     deleteAccount, getAccounts, getMoreAccounts, 
     getMatchedAccounts, banAccount, 
-    unbanAccount, warningAccount, changeAuthz, 
-    notifyReviewerWithoutRepeat,
-    clearNotif, readNotif, updateSessionNotif
+    unbanAccount, warningAccount, deleteWarning,
+    changeAuthz, uniqueNotifyReviewers,
+    clearNotif, readNotif
 };

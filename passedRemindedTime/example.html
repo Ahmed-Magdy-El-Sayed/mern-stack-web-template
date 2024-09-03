@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elapsed/Remained Time</title>
+    <style>
+        body{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: whitesmoke;
+            color: #515151;
+            text-align: center;
+        }
+
+        h4 {
+            word-break: break-word;
+        }
+
+        .counter{
+            font-weight: bold;
+        }
+
+        hr{
+            border-width: thin;
+            width: 100%;
+        }
+
+        #comment .details{
+            display: flex;
+            gap: 20px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Function Example</h1>
+    <p id="TimeRemainedP">Calc remained time from</p>
+    <h4 id="TimeRemained"></h4>
+    <div id="RemainedCounter" class="counter">
+        <span class="years"></span>
+        <span class="months"></span>
+        <span class="days"></span>
+        <span class="hours"></span>
+        <span class="minutes"></span>
+        <span class="secounds"></span>
+    </div>
+    <hr>
+    <p id="TimeElapsedP">Calc elapsed time from</p>
+    <h4 id="TimeElapsed"></h4>
+    <div id="ElapsedCounter" class="counter">
+        <span class="years"></span>
+        <span class="months"></span>
+        <span class="days"></span>
+        <span class="hours"></span>
+        <span class="minutes"></span>
+        <span class="secounds"></span>
+    </div>
+    <hr>
+    <p id="TimeDiffP">Calc elapsed/remained time from </p>
+    <h4 id="TimeDiff"></h4>
+
+    <script src="timeDelta.js"></script>
+    <script>
+        TimeRemainedP.innerHTML += ` now until ${new Date(1904590800000).toLocaleString()}`
+        TimeRemained.innerHTML = JSON.stringify(timeDelta(1904590800000))
+        
+        const timeRemainedInterval = setInterval(()=>{
+            let timeObj = timeDelta(1904590800000)
+            if(timeObj == "Invalid Date") clearInterval(timeRemainedInterval)
+            if(timeObj.state == "remained")
+                RemainedCounter.style.color = "firebrick"
+            else
+                RemainedCounter.style.color = "forestgreen"
+            RemainedCounter.querySelector(".years").innerHTML = timeObj.years? ("0"+timeObj.years).slice(-2)+"/" : "00/";
+            RemainedCounter.querySelector(".months").innerHTML = timeObj.months? ("0"+timeObj.months).slice(-2)+"/" : "00/";
+            RemainedCounter.querySelector(".days").innerHTML = timeObj.days? ("0"+timeObj.days).slice(-2)+"," : "00,";
+            RemainedCounter.querySelector(".hours").innerHTML = timeObj.hours? ("0"+timeObj.hours).slice(-2)+":" : "00:";
+            RemainedCounter.querySelector(".minutes").innerHTML = timeObj.minutes? ("0"+timeObj.minutes).slice(-2)+":" : "00:";
+            RemainedCounter.querySelector(".secounds").innerHTML = timeObj.secounds? ("0"+timeObj.secounds).slice(-2) : "00";
+        }, 1000)
+
+        TimeElapsedP.innerHTML += ` ${new Date(1652133600000).toLocaleString()} until now`
+        TimeElapsed.innerHTML = JSON.stringify(timeDelta(1652133600000))
+        
+        const timeElapsedInterval = setInterval(()=>{
+            let timeObj = timeDelta(1652133600000)
+            if(timeObj == "Invalid Date") clearInterval(timeElapsedInterval)
+            if(timeObj.state == "remained")
+                ElapsedCounter.style.color = "firebrick"
+            else
+                ElapsedCounter.style.color = "forestgreen"
+            ElapsedCounter.querySelector(".years").innerHTML = timeObj.years? ("0"+timeObj.years).slice(-2)+"/" : "00/";
+            ElapsedCounter.querySelector(".months").innerHTML = timeObj.months? ("0"+timeObj.months).slice(-2)+"/" : "00/";
+            ElapsedCounter.querySelector(".days").innerHTML = timeObj.days? ("0"+timeObj.days).slice(-2)+"," : "00,";
+            ElapsedCounter.querySelector(".hours").innerHTML = timeObj.hours? ("0"+timeObj.hours).slice(-2)+":" : "00:";
+            ElapsedCounter.querySelector(".minutes").innerHTML = timeObj.minutes? ("0"+timeObj.minutes).slice(-2)+":" : "00:";
+            ElapsedCounter.querySelector(".secounds").innerHTML = timeObj.secounds? ("0"+timeObj.secounds).slice(-2) : "00";
+        }, 1000)
+
+        TimeDiffP.innerHTML += `Calc remained time from ${new Date("5/20/2010").toLocaleString()} until ${new Date("8/5/2020, 1:30:5 PM").toLocaleString()}`
+        TimeDiff.innerHTML = JSON.stringify(timeDelta("5/20/2010", "8/5/2020, 1:30:5 PM"))
+        
+    </script>
+</body>
+</html>
