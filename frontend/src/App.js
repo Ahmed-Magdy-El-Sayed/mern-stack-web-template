@@ -25,10 +25,9 @@ import { addUser } from './redux/userSlice';
 import { useCookies } from 'react-cookie';
 import ProtectedRoute from './components/protectedRoute';
 
-let forceOne = true;
+let forceOnce = true;
 function App() {
   const [cookies] = useCookies();
-  const user = useSelector(state=> Object.keys(state.user).length? state.user : null);
   const alerts = useSelector(state=> state.alerts);
   const warnings = useSelector(state=> state.warnings);
   const dispatch = useDispatch();
@@ -73,8 +72,8 @@ function App() {
     if(window.localStorage.getItem("warnings"))
       dispatch(addWarnings(JSON.parse(window.localStorage.getItem("warnings"))))
 
-    if(cookies.user && forceOne){
-      forceOne = false;
+    if(cookies.user && forceOnce){
+      forceOnce = false;
       socket.emit("makeRoom", cookies.user._id, cookies.user.role) //to can emit specific functions for each user / user role
 
       socket.on("warning", reason=>{

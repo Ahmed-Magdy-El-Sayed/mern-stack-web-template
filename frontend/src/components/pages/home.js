@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { defaultContentImg, contentRoute, contentImagesPath } from '../../utils';
-import { useDispatch, useSelector} from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { addAlert } from '../../redux/alertSlice';
 import ContentCard from '../contentCard';
 import Loader from '../loader';
@@ -8,7 +8,6 @@ import ContentSearch from '../contentSearch';
 import { useNavigate } from 'react-router-dom';
 
 export default function Home(){
-    const user = useSelector(state=> Object.keys(state.user).length? state.user : null)
     const [stateContents, setStateContents] = useState([])
     const [sliderContents, setSliderContents] = useState([])
     const [moreContent, setMoreContent] = useState(true)

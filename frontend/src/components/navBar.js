@@ -34,7 +34,7 @@ export default function NavBar() {
     },[])
     
     const readNotif= ()=>{
-        if(!readNotifIsOpend /* !notifyIsOpened */)
+        if(!readNotifIsOpend)
             fetch(process.env.REACT_APP_API_SERVER+"/account/notif/read", {
                 method:"post",
                 credentials: "include"
@@ -56,7 +56,6 @@ export default function NavBar() {
         else if(notifs.length)
             setNotifs(notifs=>notifs.map(notif=>({...notif, isReaded: true})))
         readNotifIsOpend = !readNotifIsOpend
-        /* setNotifyIsOpened(!notifyIsOpened); */
     }
     
     const clearNotif= ()=>{
