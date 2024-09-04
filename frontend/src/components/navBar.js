@@ -238,7 +238,7 @@ export default function NavBar() {
                                                     }
                                                 </li>
                                             )}
-                                            <a className="text-primary text-decoration-none" onClick={clearNotif}> Clear Notifications </a>
+                                            <span className="text-primary text-decoration-none" onClick={clearNotif}> Clear Notifications </span>
                                         </>
                                         :<p>No notifications</p>
                                         }
@@ -313,7 +313,7 @@ export default function NavBar() {
                                     onError={defaultUserImg}
                                 />
                                 <h1 className="d-inline ms-3">{user.name}</h1>
-                                <img className='preview-image d-block w-50 mx-auto' ref={previewRef}/>
+                                <img className='preview-image d-block w-50 mx-auto' alt="" ref={previewRef}/>
                                 {changeProfileAlert?
                                     <div className={'alert alert-'+changeProfileAlert.state+' fade show w-100 text-center p-2 m-0'}> 
                                     {changeProfileAlert.msg}

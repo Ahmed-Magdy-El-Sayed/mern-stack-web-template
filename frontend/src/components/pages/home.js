@@ -109,9 +109,9 @@ export default function Home(){
                         )}
                         {moreContent && ((stateContents.length % 10) === 0) &&
                             <div className="show-contents text-center m-auto fs-4 mt-3">
-                                <a className="text-decoration-none" href='' onClick={getMoreContents}>
+                                <span className="text-decoration-none" href='' onClick={getMoreContents}>
                                     show more
-                                </a>
+                                </span>
                             </div>
                         }
                     </div>

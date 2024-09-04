@@ -12,6 +12,7 @@ function Reply({commentIndex, replyToID}){
     const commentID = comments[commentIndex]._id
     const allReplies = comments[commentIndex].replies
     const [replies, setReplies] = useState(allReplies[replyToID])
+    const [viewReplies, setViewReplies] = useState(new Array(allReplies[replyToID].length))
     const dispatch = useDispatch()
 
     if(JSON.stringify(allReplies[replyToID]) && allReplies[replyToID]?.length && JSON.stringify(allReplies[replyToID]) !== JSON.stringify(replies))
@@ -49,10 +50,16 @@ function Reply({commentIndex, replyToID}){
     }, [])
 
     let getRepliesIsRunning = false; 
-    const getReplies = replyToID =>{
+    const getReplies = (replyToID, i) =>{
         if(getRepliesIsRunning)
             return null
+        
         getRepliesIsRunning = true
+        
+        if(allReplies[replyToID])
+            return setViewReplies(arr=> [...arr.slice(0, i), !arr[i], ...arr.slice(i+1)])
+        
+        setViewReplies(arr=> [...arr.slice(0, i), !arr[i], ...arr.slice(i+1)])
         fetch(`${process.env.REACT_APP_API_SERVER}/content/${content._id}/comment/${commentID}/replies/${replyToID}`)
         .then(async res=>{ 
             if(res.ok) return await res.json()
@@ -85,10 +92,10 @@ function Reply({commentIndex, replyToID}){
     return <>{
         replies.map((reply, i)=>
         <div className="reply-container" key={reply._id}>
-            <div className="reply pt-3" id={"id"+reply._id} data-index={i}>
+            <div className="reply pt-3" id={"id"+reply._id}>
                 {/* Reply Owner Details */}
                 <div className="user-details d-flex gap-2 align-items-center">
-                    <img className="img-icon rounded-pill" src={accountImagesPath+reply.userImg} onError={defaultUserImg}/>
+                    <img className="img-icon rounded-pill" alt="" src={accountImagesPath+reply.userImg} onError={defaultUserImg}/>
                     <div className="details">
                         {
                             reply.userIsAuthz?
@@ -128,9 +135,9 @@ function Reply({commentIndex, replyToID}){
                     </div>
                     <a className="mb-3 text-decoration-none" data-bs-toggle="collapse"
                         href={"#replies"+reply._id}
-                        onClick={()=> getReplies(reply._id)}
+                        onClick={()=> getReplies(reply._id, i)}
                         data-replies-num={reply.repliesNum}
-                    > show ({reply.repliesNum}) replies </a>
+                    > {viewReplies[i]? "hide" : "show"} ({reply.repliesNum}) replies </a>
                 </div>
             }
         </div>)

@@ -108,7 +108,7 @@ export default function Verif({ id, expiration }) {
             <p>We send verification code to your email.</p>
             <br />
             <p>if you didn't receive it:
-                <a className="text-primary" onClick={resendEmail}> Click Here</a>
+                <span className="text-primary text-decoration-underline" onClick={resendEmail}> Click Here</span>
                 <span className="spinner-border spinner-border-sm text-primary d-none me-1" ref={ref=> spinnerRef.current.resend = ref} aria-hidden="true"/>
             </p>
             <form className="needs-validation col-11 col-sm-6" onSubmit={verif}>
@@ -125,7 +125,7 @@ export default function Verif({ id, expiration }) {
             {timeReminded ? <div className="text-danger w-75 m-auto">The Code will Expired in {timeReminded}</div> :
                 <div className="text-danger w-75 m-auto">
                     The Code is Expired, 
-                    <span className='text-primary cur-pointer' onClick={sendNewCode}>
+                    <span className='text-primary cur-pointer text-decoration-underline' onClick={sendNewCode}>
                         Click Here 
                         <span className="spinner-border spinner-border-sm text-primary d-none me-1" ref={ref=> spinnerRef.current.sendNew = ref} aria-hidden="true"/>
                     </span> to get new code

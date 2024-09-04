@@ -23,7 +23,7 @@ module.exports={
             </div>
             `
         };
-        console.log(notif.content)
+        
         try {
             await transporter.sendMail(mailOptions);
         } catch (err) {

@@ -27,7 +27,7 @@ export default function ContentSearch({onClickFun}){
         })  
     }
     return <>
-        <img className='preview-image w-100' ref={previewRef}/>
+        <img className='preview-image w-100' alt="" ref={previewRef}/>
         <input 
             className="form-control w-50 m-auto mb-3 dropdown-toggle" 
             type="search" 
@@ -50,7 +50,7 @@ export default function ContentSearch({onClickFun}){
                                 <h6>{content.name}</h6>
                                 <p>By {content.author.name}</p>
                             </div>
-                            <img src={contentImagesPath+content.img}  alt='image cover' onError={defaultContentImg}/>
+                            <img src={contentImagesPath+content.img}  alt='content cover' onError={defaultContentImg}/>
                         </div>
                     </li>
                 )

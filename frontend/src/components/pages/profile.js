@@ -96,7 +96,7 @@ export default function Profile() {
         { profileOwner ? 
             <>{/* If The Page Visitor Not The Owner Of The Profile, the profileOwner contains the profile owner data */} 
                 <div className="user-details w-25 text-center border-end border-2 me-2">
-                    <img className="img-icon-lg" src={accountImagesPath+profileOwner.img} alt="The user Image" onError={defaultUserImg}/>
+                    <img className="img-icon-lg" src={accountImagesPath+profileOwner.img} alt="user cover" onError={defaultUserImg}/>
                     <h3 className="m-0 mt-3">{profileOwner.name}</h3>
                 </div>
                 {contents?
@@ -114,7 +114,7 @@ export default function Profile() {
         : 
             <>{/* The Page Visitor Is The Profile Owner */}
                 <div className="user-details w-25 text-center border-end border-2 me-2">
-                    <img className="img-icon-lg" src={accountImagesPath+user?.img} alt="The user Image" onError={defaultUserImg}/>
+                    <img className="img-icon-lg" src={accountImagesPath+user?.img} alt="user cover" onError={defaultUserImg}/>
                     <h3 className="m-0 mt-3">{user?.name}</h3>
                 </div>
                 
@@ -161,7 +161,7 @@ export default function Profile() {
                                             <button className="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close" ref={modalCloseRef}></button>
                                         </div>
                                         <div className="modal-body">
-                                            <img className='preview-image w-100' ref={previewRef}/>
+                                            <img className='preview-image w-100' alt='' ref={previewRef}/>
                                             <input className="form-control mb-2" type="file" name="img" onChange={e=>{previewRef.current.src = e.currentTarget.files.length? URL.createObjectURL(e.currentTarget.files[0]):""}} required/>
                                             <div className="input-group mb-2">
                                                 <span className="input-group-text">Content Name</span>

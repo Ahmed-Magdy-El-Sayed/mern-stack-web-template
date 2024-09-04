@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import AccountControlCard from "../accountControlCard"
 import { useDispatch } from 'react-redux';
 import { addAlert } from '../../redux/alertSlice';
@@ -66,7 +66,7 @@ export default function AccountsControl() {
         setAccounts()
         fetch(process.env.REACT_APP_API_SERVER+'/account/search?name='+searchVal, {credentials:"include"})
         .then(async res=>{
-            if(res.status == 200) return res.json()
+            if(res.status === 200) return res.json()
             else throw await res.json();
         }).then(accounts=>{
             setAccounts(accounts)
@@ -140,9 +140,9 @@ export default function AccountsControl() {
                             )}
                             {accounts.users.length >= 10 &&
                                 <div className="show-comments text-center fs-5">
-                                    <a className="text-decoration-none" onClick={() => getMoreAccounts('users')}>
+                                    <span className="text-decoration-none" onClick={() => getMoreAccounts('users')}>
                                         show more
-                                    </a>
+                                    </span>
                                 </div>
                             }
                         </div>
@@ -165,9 +165,9 @@ export default function AccountsControl() {
                             )}
                             {accounts.authors.length >= 10 &&
                                 <div className="show-comments text-center fs-5">
-                                    <a className="text-decoration-none" onClick={() => getMoreAccounts('authors')}>
+                                    <span className="text-decoration-none" onClick={() => getMoreAccounts('authors')}>
                                         show more
-                                    </a>
+                                    </span>
                                 </div>
                             }
                         </div>
@@ -190,9 +190,9 @@ export default function AccountsControl() {
                             )}
                             {accounts.editors.length >= 10 &&
                                 <div className="show-comments text-center fs-5">
-                                    <a className="text-decoration-none" onClick={() => getMoreAccounts('editor')}>
+                                    <span className="text-decoration-none" onClick={() => getMoreAccounts('editor')}>
                                         show more
-                                    </a>
+                                    </span>
                                 </div>
                             }
                         </div>
@@ -215,9 +215,9 @@ export default function AccountsControl() {
                             )}
                             {accounts.admins.length >= 10 &&
                                 <div className="show-comments text-center fs-5">
-                                    <a className="text-decoration-none" onClick={() => getMoreAccounts('admins')}>
+                                    <span className="text-decoration-none" onClick={() => getMoreAccounts('admins')}>
                                         show more
-                                    </a>
+                                    </span>
                                 </div>
                             }
                         </div>

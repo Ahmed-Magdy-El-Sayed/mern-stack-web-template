@@ -6,7 +6,7 @@ import { useDispatch } from 'react-redux';
 import { addAlert } from "../redux/alertSlice";
 import { accountImagesPath, defaultUserImg, URLSearchParamsData } from "../utils";
 
-export default function ({commentIndex, replyToID, reply, index, updateReplies}){
+export default function ReplyOptions ({commentIndex, replyToID, reply, index, updateReplies}){
     const {content, comments, user} = useContext(CommentContext)
     const [displayReplyForm, setDisplayReplyForm] = useState(false)
     const spinnerRef = useRef({})
@@ -221,7 +221,7 @@ export default function ({commentIndex, replyToID, reply, index, updateReplies})
                 {reply.loved &&
                 <span className="budge bg-danger ps-2 pe-2 pt-1 pb-1 me-3 rounded-pill">
                     <FontAwesomeIcon icon="fa-solid fa-heart" className="text-white text-danger"/>
-                    <img className="img-icon-sm mb-1 rounded-circle" src={accountImagesPath+content.author.img} onError={defaultUserImg}/>
+                    <img className="img-icon-sm mb-1 rounded-circle" alt="" src={accountImagesPath+content.author.img} onError={defaultUserImg}/>
                 </span>
                 }
             </span>
@@ -243,7 +243,7 @@ export default function ({commentIndex, replyToID, reply, index, updateReplies})
             onSubmit={addReply}>
                 <span className="btn btn-close me-3 position-absolute end-0" onClick={toggleReplyForm}></span>
                 <div className="user-details mb-2 d-flex gap-2 align-items-center">
-                    <img className="img-icon rounded-circle" src={accountImagesPath+user.img} onError={defaultUserImg}/>
+                    <img className="img-icon rounded-circle" alt="" src={accountImagesPath+user.img} onError={defaultUserImg}/>
                     {
                         user.role === "admin" || user.role === "editor" || user.role === "author"?
                             <span className="username budge bg-primary text-white rounded ps-2 pe-2"> 

@@ -238,7 +238,7 @@ export default function ContentReview(){
             <h1>Slider Content</h1>
             <div className='slider-content'>
                 <div className='options d-flex justify-content-end gap-3 mb-3'>
-                    <button className='btn btn-primary' role="button" data-bs-toggle="modal" data-bs-target=".modal.add-slide">Add</button>
+                    <button className='btn btn-primary' data-bs-toggle="modal" data-bs-target=".modal.add-slide">Add</button>
                     
                     <button className='btn btn-success' onClick={updateSlider}>
                         <span className="spinner-border spinner-border-sm me-1 d-none" aria-hidden="true" ref={ref=>spinnersControl.current[0] = ref}></span>
@@ -262,7 +262,7 @@ export default function ContentReview(){
                                     </button>
                                     {addSlideOption === "custom-content"?
                                         <div className='custom-content'>
-                                            <img className='preview-image w-100' ref={previewRef}/>
+                                            <img className='preview-image w-100' alt='' ref={previewRef}/>
                                             <span className="input-group-text w-50">Image:</span>
                                             <input
                                                 className="form-control mb-3"
@@ -298,7 +298,7 @@ export default function ContentReview(){
                                     :
                                         <div className='exist-content'>
                                             <div className="dropdown">
-                                                <img className="input-group-text preview-img w-100 image-icon d-none" ref={imgRef} style={{objectFit: "cover", height: "200px"}}/>
+                                                <img className="input-group-text preview-img w-100 image-icon d-none" alt='' ref={imgRef} style={{objectFit: "cover", height: "200px"}}/>
                                                 <ContentSearch onClickFun={selectContent/* <--in this fun add the description atrr */}/>
                                             </div>
                                         </div>

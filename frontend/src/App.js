@@ -49,12 +49,7 @@ function App() {
       }else
         throw res.json()
     }).catch((err)=>{
-      if(err.msg){
-        dispatch(addAlert({type: "danger", msg:err.msg}))
-      }else{
-        console.error(err)
-        dispatch(addAlert({type:"danger", msg: "Something Went Wrong, Try Again!"}))
-      }
+      console.error(err.msg?err.msg:err)
     }).finally(()=>{removeWarningClicked = false})
   }
 

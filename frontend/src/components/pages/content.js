@@ -522,7 +522,6 @@ export default function Content() {
                                     
                                     {/* Edit Content Option */}
                                         <button className="edit-content-toggler btn btn-success rounded me-2"
-                                        role="button"
                                         data-bs-toggle="modal"
                                         data-bs-target=".modal.edit-content" 
                                         type="button">
@@ -544,7 +543,7 @@ export default function Content() {
                                                             onError={defaultContentImg}
                                                         />
                                                         <h1 className="d-inline ms-3">{content.name}</h1>
-                                                        <img className='preview-image w-25 ms-5' ref={previewRef}/>
+                                                        <img className='preview-image w-25 ms-5' alt='' ref={previewRef}/>
                                                         {editContentAlert?
                                                             <div className={'alert alert-'+editContentAlert.state+' fade show w-100 text-center p-2 m-0'}> 
                                                             {editContentAlert.msg}
@@ -603,7 +602,7 @@ export default function Content() {
                     }
                 </div>
 
-                <img className='d-block w-auto mx-auto' style={{height:"25vh"}} src={contentImagesPath+content.img} alt='image cover' onError={defaultContentImg}/>
+                <img className='d-block w-auto mx-auto' style={{height:"25vh"}} src={contentImagesPath+content.img} alt='page cover' onError={defaultContentImg}/>
                 <h1 className="content-name alert-alert-primary text-center">{content.name}</h1>
                 <p>{calcPassedTime(content.date).passedTime}</p>
 

@@ -43,7 +43,7 @@ const calcPassedTime = timestamp=>{// calc the time that passed from post the co
 
         const remindedMonths = monthsNum;
         const remindedMonthsStr = remindedMonths >= 1? ("and "+(remindedMonths===1?"one month":remindedMonths+" month")):""; //reminded from years number ex: 1 year 8 months
-        if(passedYears == 1) return {
+        if(passedYears === 1) return {
             passedTime:"since one Year " + remindedMonthsStr, 
             nextInc: nextInc < 3*60*60*1000? nextInc : null
         }
@@ -60,7 +60,7 @@ const calcPassedTime = timestamp=>{// calc the time that passed from post the co
         
         remindedDays = Math.floor(remindedDays);
         const remindedDaysStr = (remindedDays >= 1? `and ${remindedDays === 1? "one day": remindedDays+" days"}`:"");
-        if(passedMonths == 1) return {
+        if(passedMonths === 1) return {
             passedTime:"since one Month "+ remindedDaysStr, 
             nextInc: nextInc < 3*60*60*1000? nextInc : null
         }
@@ -81,13 +81,13 @@ const calcPassedTime = timestamp=>{// calc the time that passed from post the co
             remindedDays = Math.floor(remindedDays)
             const remindedDaysStr = remindedDays>=1? `and ${remindedDays===1? "one day": remindedDays+" days"}` : "";
             return {
-                passedTime:"since "+(Math.floor(passedDays/7) == 1? 
+                passedTime:"since "+(Math.floor(passedDays/7) === 1? 
                     `one week ${remindedDaysStr}`
                     : 
                     Math.floor(passedDays/7) + " Weeks "+ remindedDaysStr), 
                 nextInc: nextInc < 3*60*60*1000? nextInc : null
             }
-        }else if(passedDays == 1) return {
+        }else if(passedDays === 1) return {
             passedTime:"since one Day" + (remindedHours >= 1? ` and ${remindedHours} hr`:""), 
             nextInc: nextInc < 3*60*60*1000? nextInc : null
         }

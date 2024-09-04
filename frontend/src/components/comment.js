@@ -1,4 +1,4 @@
-import React, { useContext, useRef } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import { socket } from '../socket';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { CommentContext } from './pages/content';
@@ -10,7 +10,8 @@ import { accountImagesPath, calcPassedTime, defaultUserImg, URLSearchParamsData 
 
 function Comment() {
     const {content, comments, updateComments, user} = useContext(CommentContext);
-    const spinnerRef = useRef()
+    const spinnerRef = useRef();
+    const [viewReplies, setViewReplies] = useState(new Array(comments.length))
     const dispatch = useDispatch();
 
     //addCommentTime in content.js file
@@ -72,17 +73,21 @@ function Comment() {
     }
 
     let getRepliesIsRunning = false;
-    const getReplies = (commentID) =>{
+    const getReplies = (commentID, i) =>{
         if(getRepliesIsRunning)
             return null
         getRepliesIsRunning = true
+        
+        if(comments[i].replies)
+            return setViewReplies(arr=> [...arr.slice(0, i), !arr[i], ...arr.slice(i+1)]); 
+        
+        setViewReplies(arr=> [...arr.slice(0, i), !arr[i], ...arr.slice(i+1)]); 
         fetch(`${process.env.REACT_APP_API_SERVER}/content/${content._id}/comment/${commentID}/replies/self`)
         .then(async res=>{ 
             if(res.ok) return await res.json()
             throw await res.json()
         }).then(replies=>{
-            const index = comments.findIndex(comment=> String(comment._id) === commentID)
-            updateComments(comments=>comments.map((comment, i)=>i === index? {...comment, replies:{[comment._id]: replies}}:comment))
+            updateComments(comments=>comments.map((comment, index)=>index === i? {...comment, replies:{[comment._id]: replies}}:comment))
         }).catch(err=>{
             if(err.msg)
                 dispatch(addAlert({type:"danger", msg: err.msg}))
@@ -105,7 +110,7 @@ function Comment() {
                             <div className="comment col-md-10 pt-3" data-index={i} key={comment._id} id={`id${comment._id}`}>
                                 {/* Comment Owner Details */}
                                 <div className="user-details d-flex gap-2 align-items-center">
-                                    <img className="img-icon rounded-circle" src={accountImagesPath+comment.userImg} onError={defaultUserImg}/>
+                                    <img className="img-icon rounded-circle" alt='' src={accountImagesPath+comment.userImg} onError={defaultUserImg}/>
                                     <div className="details">
                                         {comment.userIsAuthz ? 
                                             <span className="username budge bg-primary text-white p-1 ps-2 pe-2 rounded">
@@ -149,9 +154,9 @@ function Comment() {
                                             className="mb-3 text-decoration-none"
                                             data-bs-toggle="collapse"
                                             href={`#replies${comment._id}`}
-                                            onClick={() => getReplies(comment._id)}
+                                            onClick={() => getReplies(comment._id, i)}
                                         >
-                                            {`show (${comment.repliesNum}) replies`}
+                                            {viewReplies[i]? "hide" : "show"} ({comment.repliesNum}) replies
                                         </a>
                                     </div>
                                 }
@@ -161,9 +166,9 @@ function Comment() {
                     {
                         content.commentsNum > comments.length &&
                             <div className="show-comments text-center fs-5">
-                                <a className="text-decoration-none" onClick={getMoreComments}>
+                                <span className="text-decoration-none" onClick={getMoreComments}>
                                     show more
-                                </a>
+                                </span>
                             </div>
                     }
                 </> 
@@ -175,7 +180,7 @@ function Comment() {
             <form className="write-comment alert alert-secondary m-0 mt-3 text-center position-sticky bottom-0" onSubmit={submitComment}>
                 {user? <>
                     <div className="user-details d-flex gap-2 align-items-center mb-2">
-                        <img className="img-icon rounded-circle" src={accountImagesPath+user.img} onError={defaultUserImg}/>
+                        <img className="img-icon rounded-circle" alt='' src={accountImagesPath+user.img} onError={defaultUserImg}/>
                         {user.role === "admin" || user.role === "editor" || user.role === "author" ? 
                             <span className="budge bg-primary text-white ps-2 pe-2 rounded">
                                 <h5 className="d-inline m-0">{user.name}</h5>
