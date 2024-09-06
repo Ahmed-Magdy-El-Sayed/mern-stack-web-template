@@ -50,8 +50,12 @@ const server = http.createServer(app)
 const Server = require("socket.io").Server
 const io = new Server(server,{
     cors: {
-        origin: process.env.REACT_APP_URL
-    }
+        origin: process.env.REACT_APP_URL,
+        methods: ["GET", "POST"],
+        credentials: true,
+        transports: ['websocket', 'polling'],
+    },
+    allowEIO3: true
 });
 
 io.on("connection", socket=>{
