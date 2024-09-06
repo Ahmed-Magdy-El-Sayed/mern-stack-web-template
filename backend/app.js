@@ -8,7 +8,7 @@ const {getContents}= require('./controller/content.controller');
 require("dotenv").config()
 
 const STORE = new sessionStore({
-    uri: process.env.DB_URI,// create .env file and add the variable
+    uri: process.env.MONGODB_URI,// create .env file and add the variable
     collection:"sessions"
 })
 
