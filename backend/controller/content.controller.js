@@ -55,21 +55,29 @@ const addContent = (req, res, next)=>{
     }
     const imageName = req.file?.originalname.split(".").slice(1).join(".")
     //next resizing the image to remove malicious
-    sharp(req.file.path)
-    .resize(500,500, {fit: "inside"}).toFile(path.join(__dirname,"..","images", "content", imageName))
-    .then(()=>{
-        unlink(req.file.path, err=>{
-            if(err)
-                console.log(err)
+    if(imageName)
+        sharp(req.file.path)
+        .resize(500,500, {fit: "inside"}).toFile(path.join(__dirname,"..","images", "content", imageName))
+        .then(()=>{
+            unlink(req.file.path, err=>{
+                if(err)
+                    console.log(err)
+            })
+            pushContent({...req.body, img: imageName, author}).then( content=>{
+                if(user.authz.isAuthor)//send notification of new content to review, and not add it if there is previous notification with the same body and not readed
+                uniqueNotifyReviewers("there are new contents to review", {contentName: req.body.name, authorName: author.name, root:req.protocol + '://' + req.get('origin')})
+                res.status(201).json(content)
+                incAuthorContentNum(user._id)
+            }).catch(err=> next(err))
         })
-        pushContent({...req.body, img: imageName, author}).then( content=>{
+        .catch(err=> next(err))
+    else
+        pushContent({...req.body, author}).then( content=>{
             if(user.authz.isAuthor)//send notification of new content to review, and not add it if there is previous notification with the same body and not readed
             uniqueNotifyReviewers("there are new contents to review", {contentName: req.body.name, authorName: author.name, root:req.protocol + '://' + req.get('origin')})
             res.status(201).json(content)
             incAuthorContentNum(user._id)
         }).catch(err=> next(err))
-    })
-    .catch(err=> next(err))
 }
 const hideContent = (req, res, next)=>{
     if(!validateId(req.body.contentID))

@@ -504,24 +504,24 @@ export default function Content() {
                     {!content.isUnderReview && user && (String(user._id) === content.author.id || user.role === "admin" || user.role === "editor") && 
                         <>
                             {/* Content Control */}
-                            <div className={`collapse collapse-horizontal ${String(user._id) === content.author.id?"w-25":""} align-items-center`} id="content-setting">
+                            <div className={`collapse collapse-horizontal ${String(user._id) === content.author.id?"w-50 text-end":""} align-items-center`} id="content-setting">
                                 {String(user._id) === content.author.id &&(// If the user is the content owner
                                     <>
                                         {// View/Hide content option
                                         content.hidden ?
-                                            <button className="btn btn-primary rounded me-2" type="button" onClick={()=>contentView("put", "/content/show")}>
-                                                {spinnersControl.show && <span className="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>}
+                                            <button className="btn btn-primary rounded mb-1 me-2" type="button" onClick={()=>contentView("put", "/content/show")}>
+                                                {spinnersControl.show && <span className="spinner-border spinner-border-sm me-1 cur-pointer" aria-hidden="true"></span>}
                                                 show
                                             </button>
                                         :
-                                            <button className="btn btn-secondary rounded me-2" type="button" onClick={()=>contentView("put", "/content/hide")}>
-                                                {spinnersControl.hide && <span className="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>}
+                                            <button className="btn btn-secondary rounded mb-1 me-2" type="button" onClick={()=>contentView("put", "/content/hide")}>
+                                                {spinnersControl.hide && <span className="spinner-border spinner-border-sm me-1 cur-pointer" aria-hidden="true"></span>}
                                                 Hide
                                             </button>
                                         }
                                     
                                     {/* Edit Content Option */}
-                                        <button className="edit-content-toggler btn btn-success rounded me-2"
+                                        <button className="edit-content-toggler btn btn-success mb-1 rounded me-2"
                                         data-bs-toggle="modal"
                                         data-bs-target=".modal.edit-content" 
                                         type="button">
@@ -582,7 +582,7 @@ export default function Content() {
                                 }
                             
                             {/* Delete content option */}
-                                <button className="btn btn-danger rounded" type="button" onClick={()=>contentView("delete", "/content/delete", "Are you sure you want to delete the content permanently!")}>
+                                <button className="btn btn-danger mb-1 rounded" type="button" onClick={()=>contentView("delete", "/content/delete", "Are you sure you want to delete the content permanently!")}>
                                     {spinnersControl.delete && <span className="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>}
                                     Delete
                                 </button>

@@ -6,11 +6,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addAlert } from '../../redux/alertSlice';
 import ContentCard from '../contentCard';
 import { accountImagesPath, defaultUserImg } from '../../utils';
+import Loader from '../loader';
 
 export default function Profile() {
     const user = useSelector(state=> Object.keys(state.user).length? state.user : null);
     const [profileOwner, setProfileOwner] = useState();
-    const [contents, setContents] = useState();
+    const [contents, setContents] = useState({isLoading:true});
     const spinnerRef = useRef();
     const modalCloseRef = useRef();
     const previewRef = useRef();
@@ -73,11 +74,11 @@ export default function Profile() {
         }).then(newContent=>{
             if(newContent.isUnderReview){
                 socket.emit("confirmReviewers", newContent)
-                setContents({underReview: [...contents.underReview, newContent], reviewed: contents.reviewed })
+                setContents({underReview: [...contents.underReview, newContent], reviewed: contents.reviewed, isLoading: false })
             }else
-            setContents({underReview: contents.underReview, reviewed: [...contents.reviewed, newContent]})
+            setContents({underReview: contents.underReview, reviewed: [...contents.reviewed, newContent], isLoading: false})
+            e.currentTarget?.reset();
             modalCloseRef.current.click();
-            e.currentTarget.reset();
             previewRef.current.src = null;
         }).catch(err=>{
             if(err.msg)
@@ -117,79 +118,82 @@ export default function Profile() {
                     <img className="img-icon-lg" src={accountImagesPath+user?.img} alt="user cover" onError={defaultUserImg}/>
                     <h3 className="m-0 mt-3">{user?.name}</h3>
                 </div>
-                
-                {contents?
-                    <div className="contents w-75">
-                        <div className="reviewed">
-                            <h2 className="mb-4">Contents</h2>
-                            <div className="reviewed-content d-flex flex-wrap justify-content-center gap-3">
-                                {contents.reviewed.map(content =>
-                                    <ContentCard key={content._id} content={content}/>
-                                )}
-                                {!contents.reviewed.length && <div className="alert alert-secondary text-center w-100">No content exist</div>}
-                            </div>
-                        </div>
-
-                        {user?.role === "author" &&<>
-                            <hr />
-                            <div className="under-review">
-                                <h2 className="mb-4">Under Review Contents</h2>
-                                <div className="under-review-content d-flex flex-wrap justify-content-center gap-3">
-                                    {contents.underReview.map(content =>
+                <div className="contents w-75">
+                    {contents.reviewed || contents.underReview?
+                        <>
+                            <div className="reviewed">
+                                <h2 className="mb-4">Contents</h2>
+                                <div className="reviewed-content d-flex flex-wrap justify-content-center gap-3">
+                                    {contents.reviewed.map(content =>
                                         <ContentCard key={content._id} content={content}/>
                                     )}
-                                    {!contents.underReview.length && <div className="alert alert-secondary text-center w-100">No content under review</div>}
+                                    {!contents.reviewed.length && <div className="alert alert-secondary text-center w-100">No content exist</div>}
                                 </div>
                             </div>
-                        </>}
 
-                        <hr/>
-                        <div className="card text-center m-auto cur-pointer" style={{ width: "18rem"}}>
-                            <div className="card-body">
-                                <span className="card-text text-primary" type="button" data-bs-toggle="modal" data-bs-target=".modal.add-content">
-                                    <FontAwesomeIcon icon="fa-solid fa-circle-plus" style={{ fontSize: "60px" }}></FontAwesomeIcon>
-                                    <h3>Add</h3>
-                                </span>
-                            </div>
-                        </div>
-                        <div className="modal fade add-content">
-                            <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-                                <div className="modal-content overflow-auto">
-                                    <form onSubmit={addContent}>
-                                        <div className="modal-header">
-                                            <h1 className="modal-title fs-5">Add Content</h1>
-                                            <button className="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close" ref={modalCloseRef}></button>
-                                        </div>
-                                        <div className="modal-body">
-                                            <img className='preview-image w-100' alt='' ref={previewRef}/>
-                                            <input className="form-control mb-2" type="file" name="img" onChange={e=>{previewRef.current.src = e.currentTarget.files.length? URL.createObjectURL(e.currentTarget.files[0]):""}} required/>
-                                            <div className="input-group mb-2">
-                                                <span className="input-group-text">Content Name</span>
-                                                <input className="form-control" type="text" name="name" required/>
-                                            </div>
-                                            
-                                            {/* --------- here you should add the input feilds for the content details --------- */}
-                                            <div className="alert alert-info w-100">Add here the rest of the data that your content use</div>
-                                        
-                                        </div>
-                                        <div className="modal-footer">
-                                            <button className="btn btn-success" type="submit">
-                                                <span className="spinner-border spinner-border-sm d-none me-1" ref={spinnerRef} aria-hidden="true"></span>
-                                                Save
-                                            </button>
-                                        </div>
-                                    </form>
+                            {user?.role === "author" &&<>
+                                <hr />
+                                <div className="under-review">
+                                    <h2 className="mb-4">Under Review Contents</h2>
+                                    <div className="under-review-content d-flex flex-wrap justify-content-center gap-3">
+                                        {contents.underReview.map(content =>
+                                            <ContentCard key={content._id} content={content}/>
+                                        )}
+                                        {!contents.underReview.length && <div className="alert alert-secondary text-center w-100">No content under review</div>}
+                                    </div>
+                                </div>
+                            </>}
+
+                            <hr/>
+                            <div className="card text-center m-auto cur-pointer" style={{ width: "18rem"}}>
+                                <div className="card-body">
+                                    <span className="card-text text-primary" type="button" data-bs-toggle="modal" data-bs-target=".modal.add-content">
+                                        <FontAwesomeIcon icon="fa-solid fa-circle-plus" style={{ fontSize: "60px" }}></FontAwesomeIcon>
+                                        <h3>Add</h3>
+                                    </span>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                : 
-                    <>{user?.role === "user"? 
-                        <div className="alert alert-secondary text-center w-100 h-100">This page is Empty For Now!</div>
-                        : 
-                        <div className="alert alert-secondary text-center w-100 h-100">No content exist!</div>
-                    }</>
-                }
+                            <div className="modal fade add-content">
+                                <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                                    <div className="modal-content overflow-auto">
+                                        <form onSubmit={addContent}>
+                                            <div className="modal-header">
+                                                <h1 className="modal-title fs-5">Add Content</h1>
+                                                <button className="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close" ref={modalCloseRef}></button>
+                                            </div>
+                                            <div className="modal-body">
+                                                <img className='preview-image w-100' alt='' ref={previewRef}/>
+                                                <input className="form-control mb-2" type="file" name="img" onChange={e=>{previewRef.current.src = e.currentTarget.files.length? URL.createObjectURL(e.currentTarget.files[0]):""}}/>
+                                                <div className="input-group mb-2">
+                                                    <span className="input-group-text">Content Name</span>
+                                                    <input className="form-control" type="text" name="name" required/>
+                                                </div>
+                                                
+                                                {/* --------- here you should add the input feilds for the content details --------- */}
+                                                <div className="alert alert-info w-100">Add here the rest of the data that your content use</div>
+                                            
+                                            </div>
+                                            <div className="modal-footer">
+                                                <button className="btn btn-success" type="submit">
+                                                    <span className="spinner-border spinner-border-sm d-none me-1" ref={spinnerRef} aria-hidden="true"></span>
+                                                    Save
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    : 
+                        <>{user?.role === "user"? 
+                            <div className="alert alert-secondary text-center w-100 h-100">This page is Empty For Now!</div>
+                            : 
+                            contents.isLoading?
+                                <Loader/>
+                                : <div className="alert alert-secondary text-center w-100 h-100">No content exist!</div>
+                        }</>
+                    }
+                </div>
             </>
         }
     </div>

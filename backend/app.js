@@ -5,11 +5,10 @@ const sessionStore = require('connect-mongodb-session')(session)
 const port = process.env.PORT || 4000;
 const cookieParser = require('cookie-parser');
 const {getContents}= require('./controller/content.controller');
-const REACT_APP_URL = "http://localhost:3000"
+const REACT_APP_URL = "http://localhost:3000" //add frontend url
 
-"mongodb+srv://AhmedMagdy:1YLcRgPR4L0fPQzW@cluster0.kbcoecs.mongodb.net/codexpress?retryWrites=true"
 const STORE = new sessionStore({
-    uri:'mongodb://localhost:27017/comment',//change database name here and in dbConnect.js in models folder to your database name
+    uri:'mongodb+srv://AhmedMagdy:1YLcRgPR4L0fPQzW@cluster0.kbcoecs.mongodb.net/react-codexpress?retryWrites=true',//change database name here and in dbConnect.js in models folder to your database name
     collection:"sessions"
 })
 

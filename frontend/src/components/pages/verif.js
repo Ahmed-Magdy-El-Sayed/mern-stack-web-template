@@ -49,7 +49,7 @@ export default function Verif({ id, expiration }) {
                 dispatch(addAlert({type:"danger", msg: "Something Went Wrong, Try Again!"}))
             }
         }).finally(()=>{
-            spinnerRef.current.verif.classList.add("d-none")
+            spinnerRef.current.verif?.classList.add("d-none")
             verifIsClicked = false
         })
     }
@@ -73,7 +73,7 @@ export default function Verif({ id, expiration }) {
                 dispatch(addAlert({type:"danger", msg: "Something Went Wrong, Try Again!"}))
             }
         }).finally(()=>{
-            spinnerRef.current.resend.classList.add("d-none");
+            spinnerRef.current.resend?.classList.add("d-none");
             resendIsClicked = false
         })
     }
@@ -90,7 +90,6 @@ export default function Verif({ id, expiration }) {
             else
                 throw await res.json()
         }).catch(err=>{
-            spinnerRef.current.sendNew.classList.add("d-none")
             if(err.msg)
                 dispatch(addAlert({type:"danger", msg: err.msg}))
             else{
@@ -98,6 +97,7 @@ export default function Verif({ id, expiration }) {
                 dispatch(addAlert({type:"danger", msg: "Something Went Wrong, Try Again!"}))
             }
         }).finally(()=>{
+            spinnerRef.current.sendNew?.classList.add("d-none")
             newCodeIsClicked = false
         })
     }
@@ -108,7 +108,7 @@ export default function Verif({ id, expiration }) {
             <p>We send verification code to your email.</p>
             <br />
             <p>if you didn't receive it:
-                <span className="text-primary text-decoration-underline" onClick={resendEmail}> Click Here</span>
+                <span className="text-primary text-decoration-underline cur-pointer" onClick={resendEmail}> Click Here</span>
                 <span className="spinner-border spinner-border-sm text-primary d-none me-1" ref={ref=> spinnerRef.current.resend = ref} aria-hidden="true"/>
             </p>
             <form className="needs-validation col-11 col-sm-6" onSubmit={verif}>

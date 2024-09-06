@@ -140,7 +140,7 @@ export default function AccountsControl() {
                             )}
                             {accounts.users.length >= 10 &&
                                 <div className="show-comments text-center fs-5">
-                                    <span className="text-decoration-none" onClick={() => getMoreAccounts('users')}>
+                                    <span className="text-decoration-none cur-pointer" onClick={() => getMoreAccounts('users')}>
                                         show more
                                     </span>
                                 </div>
@@ -165,7 +165,7 @@ export default function AccountsControl() {
                             )}
                             {accounts.authors.length >= 10 &&
                                 <div className="show-comments text-center fs-5">
-                                    <span className="text-decoration-none" onClick={() => getMoreAccounts('authors')}>
+                                    <span className="text-decoration-none cur-pointer" onClick={() => getMoreAccounts('authors')}>
                                         show more
                                     </span>
                                 </div>
@@ -190,7 +190,7 @@ export default function AccountsControl() {
                             )}
                             {accounts.editors.length >= 10 &&
                                 <div className="show-comments text-center fs-5">
-                                    <span className="text-decoration-none" onClick={() => getMoreAccounts('editor')}>
+                                    <span className="text-decoration-none cur-pointer" onClick={() => getMoreAccounts('editor')}>
                                         show more
                                     </span>
                                 </div>
@@ -215,7 +215,7 @@ export default function AccountsControl() {
                             )}
                             {accounts.admins.length >= 10 &&
                                 <div className="show-comments text-center fs-5">
-                                    <span className="text-decoration-none" onClick={() => getMoreAccounts('admins')}>
+                                    <span className="text-decoration-none cur-pointer" onClick={() => getMoreAccounts('admins')}>
                                         show more
                                     </span>
                                 </div>
