@@ -5,15 +5,15 @@ const sessionStore = require('connect-mongodb-session')(session)
 const port = process.env.PORT || 4000;
 const cookieParser = require('cookie-parser');
 const {getContents}= require('./controller/content.controller');
-const REACT_APP_URL = "http://localhost:3000" //add frontend url
+require("dotenv").config()
 
 const STORE = new sessionStore({
-    uri:'mongodb+srv://AhmedMagdy:1YLcRgPR4L0fPQzW@cluster0.kbcoecs.mongodb.net/react-codexpress?retryWrites=true',//change database name here and in dbConnect.js in models folder to your database name
+    uri: process.env.DB_URI,// create .env file and add the variable
     collection:"sessions"
 })
 
 app.use((req, res, next)=>{
-    res.header("Access-Control-Allow-Origin", REACT_APP_URL)
+    res.header("Access-Control-Allow-Origin", process.env.REACT_APP_URL)
     res.header('Access-Control-Allow-Headers', "Content-Type");
     res.header('Access-Control-Allow-Credentials', true);
     res.header('Access-Control-Allow-Methods', "GET, POST, PUT, DELETE");
@@ -50,7 +50,7 @@ const server = http.createServer(app)
 const Server = require("socket.io").Server
 const io = new Server(server,{
     cors: {
-        origin: REACT_APP_URL
+        origin: process.env.REACT_APP_URL
     }
 });
 
