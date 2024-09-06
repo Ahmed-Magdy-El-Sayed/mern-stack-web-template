@@ -530,51 +530,53 @@ export default function Content() {
 
                                         <div className="modal edit-content fade">
                                             <div className="modal-dialog overflow-auto">
-                                                <form onSubmit={editContent}>
-                                                    <div className='modal-header'>
-                                                        <h1 className="modal-title fs-5">Edit Content</h1>
-                                                        <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                    </div>
-                                                    <div className='modal-body'>
-                                                        <img
-                                                            className="img-icon-lg"
-                                                            src={contentImagesPath+content.img}
-                                                            alt='content-img'
-                                                            onError={defaultContentImg}
-                                                        />
-                                                        <h1 className="d-inline ms-3">{content.name}</h1>
-                                                        <img className='preview-image w-25 ms-5' alt='' ref={previewRef}/>
-                                                        {editContentAlert?
-                                                            <div className={'alert alert-'+editContentAlert.state+' fade show w-100 text-center p-2 m-0'}> 
-                                                            {editContentAlert.msg}
+                                                <div className='modal-content'>
+                                                    <form onSubmit={editContent}>
+                                                        <div className='modal-header'>
+                                                            <h1 className="modal-title fs-5">Edit Content</h1>
+                                                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div className='modal-body'>
+                                                            <img
+                                                                className="img-icon-lg"
+                                                                src={contentImagesPath+content.img}
+                                                                alt='content-img'
+                                                                onError={defaultContentImg}
+                                                            />
+                                                            <h1 className="d-inline ms-3">{content.name}</h1>
+                                                            <img className='preview-image w-25 ms-5' alt='' ref={previewRef}/>
+                                                            {editContentAlert?
+                                                                <div className={'alert alert-'+editContentAlert.state+' fade show w-100 text-center p-2 m-0'}> 
+                                                                {editContentAlert.msg}
+                                                                </div>
+                                                            :""}
+                                                            <div className="input-group my-3">
+                                                                <span className='input-group-text'>Change Image</span>
+                                                                <input className='form-control'
+                                                                    type="file"
+                                                                    name="img"
+                                                                    onChange={e=>{previewRef.current.src = URL.createObjectURL(e.currentTarget.files[0])}}
+                                                                />
                                                             </div>
-                                                        :""}
-                                                        <div className="input-group my-3">
-                                                            <span className='input-group-text'>Change Image</span>
-                                                            <input className='form-control'
-                                                                type="file"
-                                                                name="img"
-                                                                onChange={e=>{previewRef.current.src = URL.createObjectURL(e.currentTarget.files[0])}}
-                                                            />
+                                                            <p className='ms-2 text-start'>The image should be (png, jpg, or jpeg) only</p>
+                                                            <div className="input-group my-3">
+                                                                <span className='input-group-text'>Name</span>
+                                                                <input
+                                                                    className="form-control pb-2"
+                                                                    type="text"
+                                                                    name="name"
+                                                                    defaultValue={content.name}
+                                                                />
+                                                            </div>
                                                         </div>
-                                                        <p>The image should be (png, jpg, or jpeg) only</p>
-                                                        <div className="input-group my-3">
-                                                            <span className='input-group-text'>Name</span>
-                                                            <input
-                                                                className="form-control pb-2"
-                                                                type="text"
-                                                                name="name"
-                                                                defaultValue={content.name}
-                                                            />
+                                                        <div className='modal-footer'>
+                                                            <button className="btn btn-success" type="submit">
+                                                                {spinnersControl.edit && <span className="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>}
+                                                                Save
+                                                            </button>
                                                         </div>
-                                                    </div>
-                                                    <div className='modal-footer'>
-                                                        <button className="btn btn-success" type="submit">
-                                                            {spinnersControl.edit && <span className="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>}
-                                                            Save
-                                                        </button>
-                                                    </div>
-                                                </form>
+                                                    </form>
+                                                </div>
                                             </div>
                                         </div>
                                     </>
