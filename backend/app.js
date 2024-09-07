@@ -26,12 +26,7 @@ app.use(express.json())
 app.use(cookieParser())
 app.use(session({
     secret:'ed0d1d5cbbb81661fd20d8e8994238d6f3baa419bddbaa6d1bbe3aa9f78b6f2e',//change the secret string here
-    cookie: {
-        maxAge: 3*24*60*60*1000,
-        sameSite: "none",
-        secure: true,      
-        httpOnly: true
-    },//changing the maxAge value requires changing in account.control line 83 & verif.control line 18
+    cookie: { maxAge: 3*24*60*60*1000 },//changing the maxAge value requires changing in account.control line 83 & verif.control line 18
     resave: true,
     saveUninitialized: false,
     store:STORE
