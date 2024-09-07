@@ -11,6 +11,7 @@ const { unlink, existsSync } = require('fs');
 const updateSession = (req, res, next)=>{
     userModel.getUser(req.session.user._id).then(newUser=>{
         req.session.user = newUser;
+        req.session.save();
         const user = {...newUser, role: newUser.authz.isAdmin? "admin" : newUser.authz.isEditor? "editor" : newUser.authz.isAuthor? "author" : "user"};
         delete user.authz;
         res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp, secure: true, sameSite: "none"})
@@ -81,6 +82,7 @@ const checkUser = async (req, res, next) =>{//log in the user
                     delete account.warning
                     req.session.user = {...account};
                     req.session.userSessionExp = new Date(Date.now()+3*24*60*60*1000)
+                    req.session.save();
                     const user = {...req.session.user, role: authz.isAdmin? "admin" : authz.isEditor? "editor" : authz.isAuthor? "author" : "user"};
                     delete user.authz;
                     delete user.notifs
