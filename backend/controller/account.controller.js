@@ -258,7 +258,7 @@ const getProfile = async (req, res, next)=>{//get profile page data
         }
         if(contents == "error")
             return null
-        res.status(200).json({contents, isAuthor: sessionUser.authz.isAuthor})
+        res.status(200).json({contents})
     }else{
         userModel.getAuthorData(profileUserID).then(async user=>{
             if(!user) return res.status(400).json({msg:"Bad Request! Try Again."})
@@ -278,7 +278,7 @@ const getProfile = async (req, res, next)=>{//get profile page data
             }
             if(contents == "error")
                 return null
-            res.status(200).json({contents, profileOwner: user, isAuthor: sessionUser.authz.isAuthor})
+            res.status(200).json({contents, profileOwner: user})
         }).catch(err=> next(err));
     }
 }
