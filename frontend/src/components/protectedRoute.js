@@ -1,15 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { useCookies } from "react-cookie";
+import React from "react";
+import { useSelector } from "react-redux";
 import { Outlet, Navigate } from "react-router-dom";
 
 export default function ProtectedRoute({forAuthRoute}){
-    const [cookies] = useCookies();
-    const [auth, setAuth] = useState(cookies.user?Object.keys(cookies.user).length:null)
-    useEffect(()=>{
-        setAuth(cookies.user?Object.keys(cookies.user).length:null)
-    },[cookies])
+    const user = useSelector(state=> Object.keys(state.user).length? state.user : null)
     if(forAuthRoute)
-        return auth? <Outlet/> : <Navigate to="/account/login"/>
+        return user? <Outlet/> : <Navigate to="/account/login"/>
     else
-        return auth? <Navigate to="/"/> : <Outlet/>
+        return user? <Navigate to="/"/> : <Outlet/>
 }
