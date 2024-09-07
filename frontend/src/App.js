@@ -17,7 +17,7 @@ import { fas } from '@fortawesome/free-solid-svg-icons';
 import { far } from '@fortawesome/free-regular-svg-icons';
 import { Button, Modal } from 'react-bootstrap';
 import { addWarnings, deleteWarning } from './redux/warningSlice';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { socket } from './socket';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import NotFound from './components/pages/404';
@@ -27,10 +27,14 @@ import ProtectedRoute from './components/protectedRoute';
 
 let forceOnce = true;
 function App() {
-  const [cookies] = useCookies();
+  const [cookies] = useCookies(['user']);
+  const [cookieUser, setCookieUser] = useState(cookies.user)
   const alerts = useSelector(state=> state.alerts);
   const warnings = useSelector(state=> state.warnings);
   const dispatch = useDispatch();
+
+  if(cookies.user !== cookieUser)
+    setCookieUser(cookies.user)
 
   let removeWarningClicked = false;
   const removeWarning = ()=>{
@@ -76,7 +80,7 @@ function App() {
         dispatch(addWarnings([reason]))
       })
     }
-  },[cookies])
+  },[cookieUser])
   
   return (
     <div className="App bg-light">
