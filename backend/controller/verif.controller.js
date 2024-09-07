@@ -18,7 +18,7 @@ const verifyUser = (req, res, next) =>{
             req.session.userSessionExp = new Date(Date.now()+3*24*60*60*1000)
             const user = {...req.session.user, role: result.authz.isAdmin? "admin" : result.authz.isEditor? "editor" : result.authz.isAuthor? "author" : "user"};
             delete user.authz
-            res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp})
+            res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp, secure: true, sameSite: "none"})
             res.status(200).end()
         }
     }).catch(err=> next(err))
