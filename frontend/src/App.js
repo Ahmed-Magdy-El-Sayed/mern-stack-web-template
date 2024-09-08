@@ -28,13 +28,9 @@ import ProtectedRoute from './components/protectedRoute';
 let forceOnce = true;
 function App() {
   const [cookies] = useCookies(['user']);
-  const [cookieUser, setCookieUser] = useState(cookies.user)
   const alerts = useSelector(state=> state.alerts);
   const warnings = useSelector(state=> state.warnings);
   const dispatch = useDispatch();
-
-  if(cookies.user !== cookieUser)
-    setCookieUser(cookies.user)
 
   let removeWarningClicked = false;
   const removeWarning = ()=>{
@@ -59,7 +55,7 @@ function App() {
 
   useEffect(()=>{
     dispatch(addUser(cookies.user))
-
+    console.log(cookies)
     window.addEventListener( "pageshow", e => {
       const historyTraversal = e.persisted || 
         ( typeof window.performance != "undefined" && 
@@ -80,7 +76,7 @@ function App() {
         dispatch(addWarnings([reason]))
       })
     }
-  },[cookieUser])
+  },[cookies])
   
   return (
     <div className="App bg-light">

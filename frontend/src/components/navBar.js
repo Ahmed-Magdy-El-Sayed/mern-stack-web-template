@@ -126,7 +126,7 @@ export default function NavBar() {
             credentials: 'include'
         }).then(async res=>{
             if(res.ok){
-                window.location.href = "/"
+                
                 dispatch(clearUser())
             }else
                 throw await res.json()
@@ -137,7 +137,10 @@ export default function NavBar() {
                 console.error(err)
                 dispatch(addAlert({type:"danger", msg: "Something Went Wrong, Try Again!"}))
             }
-        }).finally(()=>{logoutIsClicked = false})
+        }).finally(()=>{
+            window.location.href = "/"; 
+            logoutIsClicked = false
+        })
     };
 
     let deleteAccIsClicked = false;

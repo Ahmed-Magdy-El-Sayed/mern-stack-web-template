@@ -14,7 +14,7 @@ const updateSession = (req, res, next)=>{
         req.session.save();
         const user = {...newUser, role: newUser.authz.isAdmin? "admin" : newUser.authz.isEditor? "editor" : newUser.authz.isAuthor? "author" : "user"};
         delete user.authz;
-        res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp, secure: true, sameSite: "none"})
+        res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp, secure: true, sameSite: "none", domain: req.get('host')})
         res.status(200).end()
     }).catch(err=> next(err))
 }
@@ -86,7 +86,7 @@ const checkUser = async (req, res, next) =>{//log in the user
                     const user = {...req.session.user, role: authz.isAdmin? "admin" : authz.isEditor? "editor" : authz.isAuthor? "author" : "user"};
                     delete user.authz;
                     delete user.notifs
-                    res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp, secure: true, sameSite: "none"})
+                    res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp, secure: true, sameSite: "none", domain: req.get('host')})
                     res.status(200).json({
                         user,
                         warnings: newWarning
@@ -166,7 +166,7 @@ const changeProfile = async (req, res, next)=>{
                     const user = {...req.session.user, role: authz.isAdmin? "admin" : authz.isEditor? "editor" : authz.isAuthor? "author" : "user"};
                     delete user.authz;
                     delete user.notifs;
-                    res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp, secure: true, sameSite: "none"})
+                    res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp, secure: true, sameSite: "none", domain: req.get('host')})
                     res.status(200).end()
                 })
             }else res.status(200).end()
@@ -180,7 +180,7 @@ const logout =(req,res)=>{
             console.error(err) 
             return res.status(500).json({msg:"Failed to logout"})
         }
-        res.cookie("user", "", {expires: new Date("Thu, 01 Jan 1970 00:00:01 GMT"), secure: true, sameSite: "none"})
+        res.cookie("user", "", {expires: new Date("Thu, 01 Jan 1970 00:00:01 GMT"), secure: true, sameSite: "none", domain: req.get('host')})
         res.status(201).end()
     });
 }
@@ -217,7 +217,7 @@ const deleteAccount = (req, res, next)=>{
             userModel.deleteUser(user._id).then(result=>{
                 if(!result) res.status(400).json({msg:"Account not found!"})
                 else{
-                    res.cookie("user", "", {expires: new Date("Thu, 01 Jan 1970 00:00:01 GMT"), secure: true, sameSite: "none"})
+                    res.cookie("user", "", {expires: new Date("Thu, 01 Jan 1970 00:00:01 GMT"), secure: true, sameSite: "none", domain: req.get('host')})
                     res.status(201).end()
                     sendEmail(user.email, {
                         title:"Your Account Was Deleted",
@@ -433,7 +433,7 @@ const readNotif = (req, res, next)=>{//when open the notifications
         req.session.save(()=>{
             const user = {...req.session.user, role: authz.isAdmin? "admin" : authz.isEditor? "editor" : authz.isAuthor? "author" : "user"};
             delete user.authz;
-            res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp, secure: true, sameSite: "none"})
+            res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp, secure: true, sameSite: "none", domain: req.get('host')})
             res.status(201).json(notifs)
         })
     }).catch( err=> next(err))
