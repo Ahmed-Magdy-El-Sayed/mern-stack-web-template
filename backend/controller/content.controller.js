@@ -18,7 +18,7 @@ const { unlink, existsSync } = require("fs");
 
 const getContents = (req, res, next)=>{//get the home page content
     getLastAddedContents(req.session.user).then(async contents=>{
-        console.log(process.env.REACT_APP_URL.split('/').pop())
+        console.log(new URL(process.env.REACT_APP_URL).hostname)
         res.status(200).json({contents, sliderContents: JSON.parse(await fspromise.readFile(path.join(__dirname,"sliderContents.json"), "utf-8"))})
     }).catch(err=> next(err));
 }

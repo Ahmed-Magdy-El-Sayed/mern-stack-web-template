@@ -4,7 +4,7 @@ const isLoggedOut = (req, res, next)=>{
     const user = {...req.session.user};
     if(req.session.user && new Date(req.session.userSessionExp).getTime() > Date.now()){
         delete user.notifs;
-        res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp, secure: true, sameSite: "none", domain: process.env.REACT_APP_URL.split('/').pop()})
+        res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp, secure: true, sameSite: "none", domain: new URL(process.env.REACT_APP_URL).hostname, path: "/"})
         res.status(403).json({msg: "Forbidden"});
     }else next();
 }
@@ -13,7 +13,7 @@ const isLoggedIn = (req, res, next)=>{
     if(req.session.user && new Date(req.session.userSessionExp).getTime() > Date.now())
         next()
     else{
-        res.cookie("user", "", {expires: new Date("Thu, 01 Jan 1970 00:00:01 GMT"), secure: true, sameSite: "none", domain: process.env.REACT_APP_URL.split('/').pop()})
+        res.cookie("user", "", {expires: new Date("Thu, 01 Jan 1970 00:00:01 GMT"), secure: true, sameSite: "none", domain: new URL(process.env.REACT_APP_URL).hostname, path: "/"})
         res.status(403).json({msg: "Forbidden"});
     }
 }
