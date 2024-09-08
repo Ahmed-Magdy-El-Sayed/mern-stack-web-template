@@ -55,7 +55,7 @@ function App() {
 
   useEffect(()=>{
     dispatch(addUser(cookies.user))
-    console.log(cookies)
+    
     window.addEventListener( "pageshow", e => {
       const historyTraversal = e.persisted || 
         ( typeof window.performance != "undefined" && 

@@ -86,6 +86,7 @@ const checkUser = async (req, res, next) =>{//log in the user
                     const user = {...req.session.user, role: authz.isAdmin? "admin" : authz.isEditor? "editor" : authz.isAuthor? "author" : "user"};
                     delete user.authz;
                     delete user.notifs
+                    console.log(req.get('host'))
                     res.cookie("user", JSON.stringify(user), {expires: req.session.userSessionExp, secure: true, sameSite: "none", domain: req.get('host')})
                     res.status(200).json({
                         user,
