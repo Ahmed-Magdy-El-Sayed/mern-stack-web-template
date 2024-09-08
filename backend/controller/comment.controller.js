@@ -90,7 +90,7 @@ const replyComment = (req, res, next)=>{
             await sendEmail(email, {
                 title: "New Reply In Your Comment",
                 content:`
-                <h5>There is new reply in your comment in the content ${result.name} <a href="${req.protocol + '://' + req.get('host')}/content/id/${result._id}">click here</a> to go to the content</h5>
+                <h5>There is new reply in your comment in the content ${result.name} <a href="${process.env.REACT_APP_URL}/content/id/${result._id}">click here</a> to go to the content</h5>
                 <p style="white-space: pre-wrap;"><bold>The reply:</bold>\n "${newReply.body}"</p>
                 `
             })
