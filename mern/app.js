@@ -1,10 +1,10 @@
 const express = require('express')
 const app = express();
+const path = require('path')
 const session = require('express-session')
 const sessionStore = require('connect-mongodb-session')(session)
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 3000;
 const cookieParser = require('cookie-parser');
-const {getContents}= require('./controller/content.controller');
 require("dotenv").config()
 
 const STORE = new sessionStore({
@@ -12,27 +12,18 @@ const STORE = new sessionStore({
     collection:"sessions"
 })
 
-app.use((req, res, next)=>{
-    res.header("Access-Control-Allow-Origin", process.env.REACT_APP_URL)
-    res.header('Access-Control-Allow-Headers', "Content-Type");
-    res.header('Access-Control-Allow-Credentials', true);
-    res.header('Access-Control-Allow-Methods', "GET, POST, PUT, DELETE");
-    next();
-})
-
-app.set('trust proxy', 1);
-
+app.use(express.static(path.join(__dirname, "build")));
 app.use('/images', express.static('./images'))
 app.use(express.urlencoded({extended:false}))
 app.use(express.json())
 app.use(cookieParser())
 app.use(session({
     secret:'ed0d1d5cbbb81661fd20d8e8994238d6f3baa419bddbaa6d1bbe3aa9f78b6f2e',//change the secret string here
-    cookie: {
+    cookie: {/* 
         sameSite: "none",
-        secure: true,
+        secure: true, */
         maxAge: 3*24*60*60*1000
-    },//changing the maxAge value requires changing in account.control line 83 & verif.control line 18
+    },//changing in the maxAge value requires changing in account.control line 83 & verif.control line 18
     resave: true,
     saveUninitialized: false,
     store:STORE
@@ -43,26 +34,18 @@ app.use((err, req, res, next)=>{
 })
 
 /* set the routs */
-app.get('/', getContents)
-app.use('/account',require('./routers/account.router'))
-app.use('/verify',require('./routers/verif.router'))
-app.use('/content',require('./routers/content.router'))
+app.use('/api', require("./routers/index"))
+app.use((req, res) => {
+    res.sendFile(path.join(__dirname, "build", "index.html"));
+});
 
 app.all('*',(req,res)=>{res.status(404).json({msg:'Route Not Found!'})})
 
 const http = require("http");
 const server = http.createServer(app)
-/* set socket.io to update the pages without refresh it */
+/* set socket.io to update the pages without need to reload it */
 const Server = require("socket.io").Server
-const io = new Server(server,{
-    cors: {
-        origin: process.env.REACT_APP_URL,
-        methods: ["GET", "POST"],
-        credentials: true,
-        transports: ['websocket', 'polling'],
-    },
-    allowEIO3: true
-});//  failed: WebSocket is closed before the connection is established.
+const io = new Server(server);
 
 io.on("connection", socket=>{
     /* start global events */

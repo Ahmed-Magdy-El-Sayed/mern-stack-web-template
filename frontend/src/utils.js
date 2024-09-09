@@ -1,8 +1,8 @@
 
 const contentRoute = '/content/id/'
 const profileRoute = '/account/profile/'
-const accountImagesPath = process.env.REACT_APP_API_SERVER+'/account/'
-const contentImagesPath = process.env.REACT_APP_API_SERVER+'/content/'
+const accountImagesPath = process.env.REACT_APP_API_SERVER+'/images/account/'
+const contentImagesPath = process.env.REACT_APP_API_SERVER+'/images/content/'
 
 
 const calcPassedTime = timestamp=>{// calc the time that passed from post the comment

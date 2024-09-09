@@ -258,7 +258,7 @@ export default function ContentReview(){
                                         type='button'
                                         value="custom-content"
                                         onClick={()=> setAddSlideOption(option=>option==="custom-content"? "exist-content" : "custom-content")}
-                                    >Or Custom Content
+                                    >Or {addSlideOption==="custom-content"? "Exist Content" : "Custom Content"}
                                     </button>
                                     {addSlideOption === "custom-content"?
                                         <div className='custom-content'>
