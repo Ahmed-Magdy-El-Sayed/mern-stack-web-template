@@ -38,5 +38,5 @@ jobs:
         uses: denoland/deployctl@v1
         with:
           project: "codexpress"
-          entrypoint: "backend/app.js"
+          entrypoint: "/backend"
           root: ""
