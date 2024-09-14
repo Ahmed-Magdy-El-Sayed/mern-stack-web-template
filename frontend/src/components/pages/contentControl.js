@@ -152,7 +152,7 @@ export default function ContentReview(){
         newSliderData = {
             ...newSliderData,
             img: e.currentTarget.files[0],
-            imgSrc: URL.createObjectURL(e.currentTarget.files[0]),
+            imgSrc: e.currentTarget.files.length?URL.createObjectURL(e.currentTarget.files[0]):null,
             custom: true
         }
     }

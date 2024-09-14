@@ -68,13 +68,7 @@ const checkUser = async (req, res, next) =>{//log in the user
                 }else res.status(200).json({case:"verify", id: account.id, expiration: account.verif.expire});
 
             }else{// if the account is verified
-                if(account.deleteByAdmin){
-                    if(account.error){
-                        res.status(500).json({msg:"Something went wrong. Try again"});
-                    }else{
-                        res.status(200).json({case:"deleted", msg:"Your account was deleted by the admin"});
-                    }
-                }else if(account.ban.current?.ending){//check ban exist by check the value of one of ban object attributes, as the account.ban.current is object containing by default two null values attributes. so in all cases the object retrun true
+                if(account.ban.current?.ending){//check ban exist by check the value of one of ban object attributes, as the account.ban.current is object containing by default two null values attributes. so in all cases the object retrun true
                     res.status(200).json({case:"banned", ban:account.ban.current});
                 }else{
                     const newWarning = account.warning.current.length? account.warning.current : null;

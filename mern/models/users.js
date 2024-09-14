@@ -29,8 +29,7 @@ const uSchema = new mongoose.Schema({
     warning: {
         current:[String],
         all: [String],
-    },
-    deleteByAdmin: Boolean
+    }
 })
 
 const usersModel = new mongoose.model('user',uSchema)
@@ -47,7 +46,18 @@ module.exports ={
     },
     createUser: async data =>{//for signup 
         if(!(/^[0-9a-zA-Z_]{3,}$/g.test(data.name)))
-            return "The name should be 3 or more of numbers, upper or lower characters, or underscore only"
+            return "The name should be 3 or more of numbers, upper or lower characters, or underscore only";
+
+        if(!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g.test(data.email)) return "Invalid Email"
+
+        if(!/.*[a-z]/g.test(data.password)) return "Password should contan at least one lowercase";
+        if(!/.*\d/g.test(data.password)) return "Password should contan at least one number";
+        if(!/.*[A-Z]/g.test(data.password)) return "Password should contan at least one uppercase";
+        if(!/.{8,}/g.test(data.password)) return "Password should be at least 8 or more characters";
+        
+        if(!data.licenceAccept) return "You must accept the licence"
+        delete data.licenceAccept
+
         try {
             await bcrypt.hash(data.password, 10).then( val=>{
                 data.password = val;
@@ -102,13 +112,7 @@ module.exports ={
                             return {id: user._id, verif:user.verification}
                         }else{// if it is verified
                             delete user.verification
-                            if(user.deleteByAdmin){// when admin delete an account, it not deleted until the user try to login, so can show him error msg that his account is deleted by admin
-                                return await usersModel.findByIdAndDelete(user._id).then( deleted=>{
-                                    if(!deleted) user.error  = true
-                                    return user
-                                })
-                            }
-                            else if(user.ban.current?.ending < Date.now()){// remove the ban if it ended
+                            if(user.ban.current?.ending < Date.now()){// remove the ban if it ended
                                 await usersModel.findByIdAndUpdate(user._id, {$set:{
                                     "ban.current": null
                                 }})

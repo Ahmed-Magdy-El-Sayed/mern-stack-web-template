@@ -462,7 +462,7 @@ export default function Content() {
                 setEditContentAlert({state: "danger", msg: "Something Went Wrong, Try Again!"})
             }
         }).finally(()=>{
-            e.currentTarget.reset();
+            e.currentTarget?.reset();
             setSpinnersControl(spinners=>({...spinners, edit: false}))
             editIsClicked = false
         })
@@ -555,7 +555,7 @@ export default function Content() {
                                                                 <input className='form-control'
                                                                     type="file"
                                                                     name="img"
-                                                                    onChange={e=>{previewRef.current.src = URL.createObjectURL(e.currentTarget.files[0])}}
+                                                                    onChange={e=>{previewRef.current.src = e.currentTarget.files.length?URL.createObjectURL(e.currentTarget.files[0]):null}}
                                                                 />
                                                             </div>
                                                             <p className='ms-2 text-start'>The image should be (png, jpg, or jpeg) only</p>

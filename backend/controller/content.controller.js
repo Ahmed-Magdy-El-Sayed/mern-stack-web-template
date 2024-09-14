@@ -123,7 +123,6 @@ const editContent = async(req, res, next)=>{
                 unlink(imgPath, err=>{
                     if(err)
                         throw err
-                    res.status(201).json(newContent)
                 })
             res.status(201).json(newContent)
         }).catch(err=> next(err))

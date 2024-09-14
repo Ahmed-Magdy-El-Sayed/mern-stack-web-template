@@ -70,7 +70,7 @@ export default function Signup() {
                     </div>
                     
                     <div className="form-check mt-3 d-flex justify-content-center align-itesm-center gap-3">
-                        <input className="form-check-input" id="check" type="checkbox" required />
+                        <input className="form-check-input" name='licenceAccept' id="check" type="checkbox" required />
                         <label className="form-check-lable" htmlFor="check">
                             accept our licence
                         </label>
