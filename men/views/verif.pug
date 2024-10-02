@@ -1,0 +1,19 @@
+extends ./modules/main
+block variables
+    -let pageTitle = 'verification'
+block content
+    .row.justify-content-center.text-center.mt-5
+        h1.mb-3.text-primary Verify Your Email
+        p We send verification code to your email.
+            br
+            | if you didn't receive it 
+            a(href="/verify/resend-email/"+id) Click Here 
+        form.needs-validation.col-11.col-sm-6(method="post" action="/verify")
+            input( type='text' name='id' value=id hidden)
+            input.form-control(type='text' name='code' placeholder='enter your verification code here' required)
+            .time-reminded.text-danger(data-expiration= expiration)
+            button.form-validation.btn.btn-primary.my-3(type="submit") Verify
+        if(err)
+            .alert.alert-danger.w-75.m-auto= err
+block js 
+    script(src="/js/verif.js") 

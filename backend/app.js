@@ -4,7 +4,7 @@ const session = require('express-session')
 const sessionStore = require('connect-mongodb-session')(session)
 const port = process.env.PORT || 4000;
 const cookieParser = require('cookie-parser');
-const {getContents}= require('./controller/content.controller');
+const {getContents}= require('./controllers/content.controller');
 require("dotenv").config()
 
 const STORE = new sessionStore({
@@ -20,8 +20,6 @@ app.use((req, res, next)=>{
     next();
 })
 
-app.set('trust proxy', 1);
-
 app.use('/images', express.static('./images'))
 app.use(express.urlencoded({extended:false}))
 app.use(express.json())
@@ -29,8 +27,8 @@ app.use(cookieParser())
 app.use(session({
     secret:'ed0d1d5cbbb81661fd20d8e8994238d6f3baa419bddbaa6d1bbe3aa9f78b6f2e',//change the secret string here
     cookie: {
-        sameSite: "none",
-        secure: true,
+        /* sameSite: "none",
+        secure: true, */
         maxAge: 3*24*60*60*1000
     },//changing the maxAge value requires changing in account.control line 83 & verif.control line 18
     resave: true,

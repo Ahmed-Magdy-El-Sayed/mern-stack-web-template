@@ -14,11 +14,11 @@ const {
     clearNotif, readNotif, 
     banAccount, unbanAccount, warningAccount,
     deleteWarning, postUser, checkUser, logout,
-}= require('../controller/account.controller');
+}= require('../controllers/account.controller');
 
 const {
     isLoggedIn, isAdmin, upload, isLoggedOut
-} = require('../controller/middelwares')
+} = require('../controllers/middelwares')
 
 
 router.post('/signup', isLoggedOut, postUser)

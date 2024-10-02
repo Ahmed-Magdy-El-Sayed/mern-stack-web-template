@@ -36,7 +36,7 @@ const getContent = (req, res, next) =>{// get the content details
         return res.status(400).json({msg: "Bad Request! Try Again."})
     const visited = req.cookies.visited
     if(!visited?.includes(id))
-        res.cookie('visited', visited?[...visited, id]:[id], { maxAge: 90*60*60*24, httpOnly: true, secure: true, sameSite: "none" });
+        res.cookie('visited', visited?[...visited, id]:[id], { maxAge: 90*60*60*24, httpOnly: true/* , secure: true, sameSite: "none" */ });
     getContentById({id: id, normalUser, increaseViews: !visited?.includes(id)})
     .then(content=>{
         if(!content) res.status(404).json({msg: "Content not exist!"})

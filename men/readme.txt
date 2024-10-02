@@ -1,14 +1,14 @@
 **To run the app**:
 1. Install node.js and mongodb.
-2. Go to the drive where MongoDB is installed (by default C:\) and create a folder named "data". Inside it, create another folder named "db".
-3. In the `app.js` file (line 11) and `models/dbConnect.js` file (line 7), change the database URI name to your database name. 
-    In `app.js` (line 20), change the secret. 
-    In `controller/sendEmail.js` (lines 8, 9, and 16), add your email and app password.
-4. Open the terminal:
+2. at the root directory, create a .env file and add:
+	MONGODB_URI = your-mongodb-uri
+	EMAIL_USER = your-email-account
+	EMAIL_PASS = your-email-password-app
+3. Open the terminal:
     - Inside it, go to the directory of the MongoDB installation (the default path is "C:\Program Files\MongoDB\Server\6.0\bin") and run this command to start the server: `mongod --ipv6`.
     - Open another terminal with the directory of the app. Run:
         - `npm install` to install the app packages.
-        - `node app.js` to run the app.
+        - `npm run start` to run the app.
 
 ** App Description **
 The script was built using the MVC architecture, which separates concerns into models, views, and controllers. 
@@ -39,4 +39,3 @@ To add your content, you will mainly work in:
 6. `views/pages/main.pug`: Add links of your new pages.
 7. `app.js`: Add more routers.
 8. `routers/content.rout`.
-Is there anything else you need help with?

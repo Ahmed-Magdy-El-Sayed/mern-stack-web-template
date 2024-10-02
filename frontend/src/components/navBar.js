@@ -138,7 +138,7 @@ export default function NavBar() {
                 dispatch(addAlert({type:"danger", msg: "Something Went Wrong, Try Again!"}))
             }
         }).finally(()=>{
-            window.location.href = "/"; 
+            window.location.href = "/account/login"; 
             logoutIsClicked = false
         })
     };

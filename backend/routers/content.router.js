@@ -7,11 +7,11 @@ const {getMoreContents,
     selectContent, unselectContent,
     searchContent, updateSlider,
     approveContent, rejectContent
-}= require('../controller/content.controller');
+}= require('../controllers/content.controller');
 
 const {
     isLoggedIn, isReviewer, isAuthor, upload
-} = require('../controller/middelwares')
+} = require('../controllers/middelwares')
 
 router.get('/id/:id', getContent)
 router.post('/more', getMoreContents)

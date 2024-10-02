@@ -119,7 +119,10 @@ export default function Profile() {
                     <h3 className="m-0 mt-3">{user?.name}</h3>
                 </div>
                 <div className="contents w-75">
-                    {contents.reviewed || contents.underReview?
+                    {user?.role === "user"? 
+                        <div className="alert alert-secondary text-center w-100 h-100">This page is Empty For Now!</div>
+                    : 
+                    contents.reviewed || contents.underReview?
                         <>
                             <div className="reviewed">
                                 <h2 className="mb-4">Contents</h2>
@@ -185,13 +188,9 @@ export default function Profile() {
                             </div>
                         </>
                     : 
-                        <>{user?.role === "user"? 
-                            <div className="alert alert-secondary text-center w-100 h-100">This page is Empty For Now!</div>
-                            : 
-                            contents.isLoading?
-                                <Loader/>
-                                : <div className="alert alert-secondary text-center w-100 h-100">No content exist!</div>
-                        }</>
+                    contents.isLoading?
+                        <Loader/>
+                        : <div className="alert alert-secondary text-center w-100 h-100">No content exist!</div>
                     }
                 </div>
             </>

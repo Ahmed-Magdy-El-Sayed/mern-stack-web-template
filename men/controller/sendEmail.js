@@ -1,19 +1,20 @@
 const nodemailer = require('nodemailer');
+require("dotenv").config()
 
 const transporter = nodemailer.createTransport({
     port: 465,
     host: "smtp.gmail.com",
     secure: true,
     auth: {
-        user: 'amcodes55@gmail.com',// add your email that will be the sender
-        pass: 'yuha ylbv xhyp owpm'// add your email app password
+        user: process.env.EMAIL_USER,// add your email that will be the sender
+        pass: process.env.EMAIL_PASS// add your email app password
     }
 });
 
 module.exports={
     sendEmail: async function (email, notif) {
         const mailOptions = {
-            from: 'amcodes55@gmail.com',//repeat your email again
+            from: process.env.EMAIL_USER,//repeat your email again
             to: email,
             subject: notif.title,
             html: `
@@ -23,11 +24,6 @@ module.exports={
             </div>
             `
         };
-        
-        try {
-            await transporter.sendMail(mailOptions);
-        } catch (err) {
-            console.log(err)
-        }
+        await transporter.sendMail(mailOptions);
     }
 }

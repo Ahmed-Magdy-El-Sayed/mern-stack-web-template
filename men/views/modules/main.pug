@@ -1,0 +1,109 @@
+- let links = [{title:'Home', href:'/'}, {title:'Login', href:'/account/login'}, {title:'Sign-Up', href:'/account/signup'}]
+-
+    if(user?.isAdmin)
+        links.push({title:'Accounts-Control', href:'/account'}, {title:'Content-Review', href:'/content/review'})
+    else if(user?.isEditor) 
+        links.push({title:'Content-Review', href:'/content/review'})
+
+
+block variables
+doctype html
+html
+    head
+        meta(charset='UTF-8')
+        meta(http-equiv='X-UA Compatible', content='IE=edge')
+        meta(name='viewport', content='width=device-width, initial-scale=1.0')
+        title= pageTitle
+        link(rel='stylesheet', href='/css/styles.css')
+        link(rel='stylesheet', href='/css/all.min.css')
+        link(rel='stylesheet', href='/css/bootstrap.min.css')
+        block linkCSS
+    body(style='box-sizing:border-box')
+        nav.navbar.navbar-dark.navbar-expand-md.bg-dark.top-0(style="z-index:5")
+            .container-fluid
+                a(class="navbar-brand" href="/") CodeXpress
+                button(class="navbar-toggler text-dark border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation")
+                    span(class='navbar-toggler-icon')
+                div(class="collapse navbar-collapse" id="navbarSupportedContent")
+                    ul(class="navbar-nav ms-auto me-auto")
+                        each link in links
+                            if((link.title === 'Sign-Up' || link.title === 'Login') && user) 
+                            else
+                                li.nav-item
+                                    - let isTheOpened= link.title.split('-').join(' ') === pageTitle||(link.title ==='Home' && pageTitle === 'codeXpress')? 'active' : ''
+                                    a(class=`nav-link ps-0 pe-lg-3 ${isTheOpened}` href = link.href)= link.title
+                    if(user)
+                        .my-account-info.d-flex.gap-3.justify-content-end.align-items-center
+                            .dropdown.notif
+                                i.fa-regular.fa-bell.fs-5.text-white.position-relative.icon(data-bs-toggle='dropdown', onclick="readNotif(this)")
+                                    span.position-absolute.top-0.start-100.translate-middle.badge.rounded-circle.bg-danger.p-1(class=user.notifsNotReaded?"":"d-none", style="font-size: 10px;")= user.notifsNotReaded
+                                ul.dropdown-menu.text-center.notif-content
+                                    p No notifications
+                                    //- The notification is added by assets/js/mainForLoggedIn.js ( readNotif() )
+
+                            .dropdown.setting
+                                img.dropdown-toggle.img-icon.rounded-circle(style="cursor:pointer;", src=user.img?user.img:"/user.jpg", data-bs-toggle='dropdown', alt="")
+                                ul.dropdown-menu.end-0.text-center(style="left: unset;")
+                                    li.ms-2 Hello  
+                                        h6.d-inline.m-0= user.name
+                                    hr.mt-2
+                                    li: .edit-profile-toggler(role="button", data-bs-toggle="modal", data-bs-target=".modal.edit-profile") Account Setting
+                                    li.mt-2: div(style="cursor: pointer", onclick="openProfile('"+user._id+"')") Profile
+                                    li.mt-2: .text-danger(style="cursor: pointer", onclick="logout()") Logout
+
+        .user.d-none(data-value=JSON.stringify(user))
+        if(user)
+            if(warning)
+                button(hidden, data-bs-toggle="modal", data-bs-target="#adminWarning")
+            .modal.warning.fade(data-bs-backdrop="static", id="adminWarning", tabindex="-1")
+                .modal-dialog
+                    .modal-content
+                        .modal-header.text-danger.justify-content-start.gap-3
+                            i.fa-solid.fa-triangle-exclamation.fs-2
+                            h5.modal-title Warning Form The Admin
+                        .modal-body.text-danger
+                            if(warning)
+                                h6(style="white-space: pre-wrap;")= warning.map((w,i)=>(i+1)+". "+w).join("\n")
+                            else
+                                h6(style="white-space: pre-wrap;")
+                        .modal-footer
+                            button.btn.btn-danger(data-bs-dismiss="modal") Understood
+            .modal.fade.edit-profile
+                .modal-dialog.modal-dialog-centered.modal-dialog-scrollable
+                    .modal-content
+                        form(enctype='multipart/form-data' action='/account/change-profile' method='post')
+                            .modal-header
+                                h1.modal-title.fs-5 Account Setting
+                                button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+                            .modal-body
+                                img.img-icon(style="width:100px; height:100px", src=user.img?user.img:"/user.jpg")
+                                h1.d-inline.ms-3= user.name
+                                .input-group.my-3
+                                    span.input-group-text Change Image
+                                    input.form-control(type='file' onchange="changeProfile(event)" name='img')
+                                .input-group.my-3
+                                    span.input-group-text Change Password
+                                    div.w-100
+                                        input.form-control.mb-2(type='password' name='oldPass' onkeyup="changeProfile(event)" placeholder='Enter The Old Password')
+                                        .m-0.mb-2
+                                            input.form-control(type='password' name='newPass1' pattern="(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" onkeyup="changeProfile(event)" placeholder='Enter The New Password')
+                                            .invalid-feedback.main-password.w-auto.text-center
+                                        .m-0.mb-2
+                                            input.form-control(type='password' name='newPass2' onkeyup="changeProfile(event)" placeholder='Enter The New Password Again')
+                                            .invalid-feedback.main-password.w-auto.text-center The two feilds are not matched
+                                        if(profileEditErr)
+                                            p.faild-edit.alert.alert-danger= profileEditErr
+                                .input-group.my-3
+                                    span.input-group-text.text-danger Delete The Account:
+                                    button.btn.btn-outline-danger.ms-3(type="submit", formaction="/account/delete") Delete
+                            .modal-footer
+                                button.btn.btn-success(type="submit" disabled) Save
+        block content
+        script(src='/js/bootstrap.bundle.min.js')
+        script(src='/socket.io/socket.io.js')
+        script(src='/js/main.js')
+        if(user)
+            script(src='/js/mainForLoggedIn.js')
+            if(user.isAdmin || user.isEditor)
+                script(src='/js/mainForReviewers.js')
+        block js

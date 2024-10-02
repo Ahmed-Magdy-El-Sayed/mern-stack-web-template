@@ -5,7 +5,7 @@ const {
     verifyUser,
     generateCode,
     resendEmail
-}= require('../controllers/verif.controller');
+}= require('../controller/verif.controller');
 
 router.post('/', verifyUser)
 router.get('/new-code/:id', generateCode)
