@@ -98,7 +98,7 @@ const sendRestEmail =(req, res, next)=>{
         if(typeof result == "string"){
             res.status(401).json({msg: result})
         }
-        else{console.log(req.get('origin'))
+        else{
             sendEmail(email, {
                 title: "Reset Your Account Password",
                 content: `

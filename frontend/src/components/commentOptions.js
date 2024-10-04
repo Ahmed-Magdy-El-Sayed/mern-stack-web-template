@@ -119,7 +119,7 @@ export default function CommentOptions ({comment, index, updateComments}){
                 dispatch(addAlert({type: "danger", msg:err.msg}))
             }else{
                 console.error(err)
-                dispatch(addAlert({type:"danger", msg: "Faild to delete the account, Try Again!"}))
+                dispatch(addAlert({type:"danger", msg: "Something went wrong, Try again!"}))
             }
 
         }).finally(()=>{

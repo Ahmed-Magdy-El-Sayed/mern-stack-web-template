@@ -94,7 +94,7 @@ io.on("connection", socket=>{
     socket.on("addComment", (contentID, comment)=>{
         io.emit("addCommentIn"+contentID, comment)
     })
-    socket.on("addReply", (data, newReply)=>{console.log("tessttt")
+    socket.on("addReply", (data, newReply)=>{
         io.emit("addReplyIn"+data.contentID, data.commentID, newReply)
         io.to(newReply.replyToUserID).emit("notify")
     })

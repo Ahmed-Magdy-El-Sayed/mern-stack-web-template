@@ -198,7 +198,6 @@ const updateSlider = async (req, res, next)=>{
             })
             .catch(err=> next(err))
             sliderContents.forEach(content=>{// add the image name to the content data
-                console.log(content.img.split(".")[0], file.originalname.split(".")[0])
                 if(content.custom && content.img.split(".")[0] == file.originalname.split(".")[0])
                     content.img = imageName
             })

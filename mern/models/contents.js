@@ -283,7 +283,7 @@ module.exports = {
     },
     updateComment: async data=>{
         try {
-            const commentID = new mongoose.Types.ObjectId(data.commentID)
+            const commentID = mongoose.Types.ObjectId.createFromHexString(data.commentID)
             return dbConnect(async()=>{
                 await contentModel.findByIdAndUpdate(data.contentID, {$set:{
                     'comments.$[comment].body':data.body
@@ -297,7 +297,7 @@ module.exports = {
     },
     deleteComment: async data=>{
         try {
-            const commentID = new mongoose.Types.ObjectId(data.commentID)
+            const commentID = mongoose.Types.ObjectId.createFromHexString(data.commentID)
             return dbConnect(async ()=>{
                 if(data.user.authz.isAdmin || data.user.authz.isEditor)
                     await contentModel.updateOne({_id: data.contentID, 'comments._id': commentID},{
@@ -345,7 +345,7 @@ module.exports = {
     },
     setLoveComment: async data=>{// only by the author of the content
         try {
-            const commentID = new mongoose.Types.ObjectId(data.commentID)
+            const commentID = mongoose.Types.ObjectId.createFromHexString(data.commentID)
             return dbConnect(async ()=>{
                 await contentModel.updateOne({_id: data.contentID, 'author.id': data.userID, 'comments._id': commentID},{
                     $set:{
@@ -359,7 +359,7 @@ module.exports = {
     },
     reactComment: async data=>{// by any user except content author
         try {
-            const commentID = new mongoose.Types.ObjectId(data.commentID)
+            const commentID = mongoose.Types.ObjectId.createFromHexString(data.commentID)
             return dbConnect(async()=>{
                 await contentModel.updateMany({_id: data.contentID,'comments._id': commentID},{
                     $pull:{
@@ -407,11 +407,7 @@ module.exports = {
     },
     addReply: async data=>{
         try {
-            const commentID = new mongoose.Types.ObjectId(data.commentID)
-            const repliesNum = data.replyToID? 
-            {'comments.$.replies.$[reply].repliesNum':1,
-            'comments.$.repliesNum':1} 
-            : {'comments.$.repliesNum':1}
+            const commentID = mongoose.Types.ObjectId.createFromHexString(data.commentID)
             return dbConnect(async()=>{
                 await contentModel.updateOne({_id: data.contentID, 'comments._id': commentID},{
                     $push:{
@@ -431,10 +427,17 @@ module.exports = {
                         repliesNum:0
                     }}
                 })
+                if(data.replyToID) 
                 return await contentModel.findOneAndUpdate({_id: data.contentID, 'comments._id': commentID},{
-                    $inc: repliesNum
+                    $inc: {'comments.$.replies.$[reply].repliesNum':1, 'comments.$.repliesNum':1}
                 },{
-                    arrayFilters:[{'reply._id': new mongoose.Types.ObjectId(data.replyToID)}],
+                    arrayFilters:[{'reply._id': mongoose.Types.ObjectId.createFromHexString(data.replyToID)}],
+                    new: true
+                })
+                else 
+                return await contentModel.findOneAndUpdate({_id: data.contentID, 'comments._id': commentID},{
+                    $inc: {'comments.$.repliesNum':1}
+                },{
                     new: true
                 })
             })
@@ -455,8 +458,8 @@ module.exports = {
                     }, 
                     {
                         "$match": {
-                            _id: new mongoose.Types.ObjectId(data.contentID),
-                            "comments._id": new mongoose.Types.ObjectId(data.commentID)
+                            _id: mongoose.Types.ObjectId.createFromHexString(data.contentID),
+                            "comments._id": mongoose.Types.ObjectId.createFromHexString(data.commentID)
                         }
                     },
                     {
@@ -476,8 +479,8 @@ module.exports = {
     },
     updateReply: async data=>{
         try {
-            const commentID = new mongoose.Types.ObjectId(data.commentID);
-            const replyID = new mongoose.Types.ObjectId(data.replyID);
+            const commentID = mongoose.Types.ObjectId.createFromHexString(data.commentID);
+            const replyID = mongoose.Types.ObjectId.createFromHexString(data.replyID);
             return dbConnect(async()=>{
                 await contentModel.findOneAndUpdate({_id: data.contentID, 'comments._id': commentID},{$set:{
                     'comments.$.replies.$[reply].body': data.body
@@ -492,8 +495,8 @@ module.exports = {
     deleteReply: async data=>{
         try {
             return dbConnect(async ()=>{
-                const commentID = new mongoose.Types.ObjectId(data.commentID);
-                const replyID = new mongoose.Types.ObjectId(data.replyID);
+                const commentID = mongoose.Types.ObjectId.createFromHexString(data.commentID);
+                const replyID = mongoose.Types.ObjectId.createFromHexString(data.replyID);
                 if(data.user.authz.isAdmin || data.user.authz.isEditor)
                     await contentModel.updateOne({_id:data.contentID, 'comments._id': commentID},{$set:{
                         'comments.$.replies.$[reply].userID':null,
@@ -541,8 +544,8 @@ module.exports = {
     setLoveReply: async data=>{//only by the author of the content 
         try {
             return dbConnect(async ()=>{
-                const commentID = new mongoose.Types.ObjectId(data.commentID);
-                const replyID = new mongoose.Types.ObjectId(data.replyID);
+                const commentID = mongoose.Types.ObjectId.createFromHexString(data.commentID);
+                const replyID = mongoose.Types.ObjectId.createFromHexString(data.replyID);
                 await contentModel.updateOne({_id:data.contentID, 'author.id': data.userID, 'comments._id': commentID},{$set:{
                     'comments.$.replies.$[reply].loved': data.addLove? true:false,
                 }},{
@@ -555,8 +558,8 @@ module.exports = {
     },
     reactReply: async data=>{// by any user except content author
         try {
-            const commentID = new mongoose.Types.ObjectId(data.commentID)
-            const replyID = new mongoose.Types.ObjectId(data.replyID)
+            const commentID = mongoose.Types.ObjectId.createFromHexString(data.commentID)
+            const replyID = mongoose.Types.ObjectId.createFromHexString(data.replyID)
             return dbConnect(async()=>{
                 await contentModel.updateMany({_id: data.contentID,'comments._id': commentID},{
                 $pull:{
