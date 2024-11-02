@@ -4,6 +4,8 @@ import { addBsVal, passwordValidation, URLSearchParamsData } from '../../utils';
 import { useDispatch } from 'react-redux';
 import { addAlert } from '../../redux/alertSlice';
 import { Link } from 'react-router-dom';
+import UsernameInput from '../shared/usernameInput';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export default function Signup() {
     const [verifPage, setVerifPage] = useState();
@@ -45,6 +47,7 @@ export default function Signup() {
     }
 
     const passwordErr = e=>{
+        feedbackRef.current.nextElementSibling.pattern = e.target.value
         const err = passwordValidation(e.currentTarget.value);
         if(!err) return null;
         feedbackRef.current.innerText = err;
@@ -54,11 +57,17 @@ export default function Signup() {
         {verifPage? 
             <Verif id={verifPage.id} expiration={verifPage.expiration}/>
         :
-            <div className="w-100 row text-center justify-content-center">
+            <div className="container row mx-auto text-center justify-content-center">
                 <h1 className="text-primary mt-5">Create Account</h1>
-                <form className="signup col-11 col-sm-6 m-auto needs-validation mt-5" method="post" onSubmit={signup}>
-                    <input className="form-control" type="text" pattern="^[0-9a-zA-Z_]{3,}$" name="name" placeholder="enter your name" required />
-                    <div className="invalid-feedback">The field should be 3 or more character and not contain spaces or special characters</div>
+                <form className="signup col-11 col-sm-10 col-md-7 col-lg-5 needs-validation mt-5" method="post" onSubmit={signup}>
+                    <div className='row m-auto mb-3 gap-3'>
+                        <input className="form-control col-12 col-md" type="text" pattern="^[A-Za-z][a-zA-Z_]{1,}" name="firstName" placeholder="enter your first name" required />
+                        <input className="form-control col-12 col-md" type="text" pattern="^[A-Za-z][a-zA-Z_]{1,}" name="lastName" placeholder="enter your last name" required />
+                    </div>
+                    <div className='input-group'>
+                        <UsernameInput/>
+                        <div className="invalid-feedback">The username must have at least 3 letters or numbers, contain no spaces or special characters, and cannot start with a number.</div>
+                    </div>
                     
                     <input className="form-control mt-3" type="email" name="email" placeholder="enter your email" required />
                     
@@ -83,9 +92,17 @@ export default function Signup() {
                     </button>
                 </form>
                 <div className="signup-option">
-                    <span>did you have account ?</span>
-                    <br/>
+                    <div>Aleardy have an account ?</div>
                     <Link to="/account/login">Login</Link>
+                    <div className='d-flex justify-content-center align-items-center mb-2'>
+                        <hr className='w-25'/>
+                        <span className='mx-3'> or </span>
+                        <hr className='w-25'/>
+                    </div>
+                    <a href={process.env.REACT_APP_API_SERVER+'/account/oauth/google'} className='rounded btn btn-primary'>
+                    <FontAwesomeIcon className='fs-4 me-3' icon='fa-brands fa-google'/>
+                        Continue With Google
+                    </a>
                 </div>
             </div>
         }

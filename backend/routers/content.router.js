@@ -2,7 +2,8 @@ const express = require('express')
 const router = express.Router();
 const {getMoreContents,
     getContent, hideContent, 
-    showContent, editContent, deleteContent, 
+    showContent, editContent, deleteContent,
+    getFavoriteContents ,toggleFavorite,
     addContent, getContentControl, 
     selectContent, unselectContent,
     searchContent, updateSlider,
@@ -13,14 +14,22 @@ const {
     isLoggedIn, isReviewer, isAuthor, upload
 } = require('../controllers/middelwares')
 
-router.get('/id/:id', getContent)
+// Home -note: the function that get the 10 contents in the app.js
+router.get('/search', searchContent)
 router.post('/more', getMoreContents)
+
+// profile
+router.get('/favorite/account/:id', isLoggedIn, getFavoriteContents)
+router.put('/favorite/toggle', isLoggedIn, toggleFavorite)
 router.post('/add', isLoggedIn, isAuthor, (req, res, next)=>{ 
     upload.single('img')(req, res, err=>{ 
         if(err){console.log(err); return res.status(401).json({msg: "Internal Server Error"})} 
         next()
     })
 }, addContent)
+
+// content
+router.get('/id/:id', getContent)
 router.put('/hide', isLoggedIn, isAuthor, hideContent)
 router.put('/show', isLoggedIn, isAuthor, showContent)
 router.put('/edit', isLoggedIn, isAuthor, (req, res, next)=>{ 
@@ -30,18 +39,19 @@ router.put('/edit', isLoggedIn, isAuthor, (req, res, next)=>{
     })
 }, editContent)
 router.delete('/delete', isLoggedIn, isAuthor, deleteContent)
+
+//content control
 router.get('/control', isLoggedIn, isReviewer, getContentControl)
 router.put('/select', isLoggedIn, isReviewer, selectContent)
 router.put('/unselect', isLoggedIn, isReviewer, unselectContent)
-router.get('/search', searchContent)
+router.put('/approve', isLoggedIn, isReviewer, approveContent)
+router.delete('/reject', isLoggedIn, isReviewer, rejectContent)
 router.put('/slider/update', isLoggedIn, isReviewer, (req, res, next)=>{ 
     upload.array('img')(req, res, err=>{ 
         if(err){console.log(err); return res.status(401).json({msg: "Internal Server Error"})} 
         next()
     })
 }, updateSlider)
-router.put('/approve', isLoggedIn, isReviewer, approveContent)
-router.delete('/reject', isLoggedIn, isReviewer, rejectContent)
 
 router.use('',require('./comment.router'))
 

@@ -105,7 +105,7 @@ export default function Verif({ id, expiration }) {
     return <>
         <div className="d-absolute top-0 left-0 w-100 h-100 row justify-content-center text-center mt-5">
             <h1 className="mb-3 text-primary">Verify Your Email</h1>
-            <p>We send verification code to your email.</p>
+            <p>Check your email for a verification code.</p>
             <br />
             <p>if you didn't receive it:
                 <span className="text-primary text-decoration-underline cur-pointer" onClick={resendEmail}> Click Here</span>

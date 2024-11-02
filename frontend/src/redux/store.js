@@ -1,11 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
+import modeReducer from "./modeSlice";
 import alertReducer from "./alertSlice";
 import warningReducer from "./warningSlice";
-import userSlice from "./userSlice";
 
 export default configureStore({
     reducer:{
-        user: userSlice,
+        mode: modeReducer,
         alerts: alertReducer,
         warnings: warningReducer
     }

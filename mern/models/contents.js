@@ -1,16 +1,16 @@
 const mongoose = require('mongoose');
 const dbConnect = require('./dbConnect')
 
-const {addNotif} = require("./users")
+const { addNotif } = require("./users")
 
 const contentSchema = new mongoose.Schema({
     name: {type: String, trim: true},
-    img: {type: String, default: "content.png"},
-    date: Date,
+    img: {type: String, default: "default.png"},
+    timestamp: Date,
     views: {type:Number, default: 0},
     hidden: {type:Boolean, default: false},
     commentsNum: {type:Number, default: 0},
-    author: {id:String, name: String, img: String},
+    author: {id:String, username: String, img: String},
     isUnderReview:{type:Boolean, default:false},
     reviewer: String,
     comments:{type: Array, default: []}
@@ -22,17 +22,22 @@ module.exports = {
     getLastAddedContents : async user=>{// get the content that reviewed only
         try{
             return dbConnect(async()=>{
-                if(user?.authz.isAdmin || user?.authz.isEditor)
-                    return await contentModel.find({isUnderReview: {$not:{$eq:true}}}, {comments:{replies:0}}).sort({date: -1}).limit(10)
-                else if(user?.authz.isAuthor)
-                    return await contentModel.find({isUnderReview: {$not:{$eq:true}}, 
+                const query = user?.authz.isAdmin || user?.authz.isEditor?
+                    {isUnderReview: {$not:{$eq:true}}}
+                : user?.authz.isAuthor?
+                    {isUnderReview: {$not:{$eq:true}}, 
                         $or:[
                             {hidden: {$not:{$eq:true}}},
                             {hidden: true, "author.id": String(user._id)}
                         ]
-                    }, {comments:{replies:0}}).sort({date: -1}).limit(10)
-                else
-                    return await contentModel.find({isUnderReview: {$not:{$eq:true}}, hidden: {$not:{$eq:true}}}, {comments:{replies:0}}).sort({date: -1}).limit(10)
+                    }
+                :   {isUnderReview: {$not:{$eq:true}}, hidden: {$not:{$eq:true}}}
+                
+                return await contentModel.find(
+                    query, 
+                    {img:1, name:1, timestamp:1, author:1, hidden:1}, 
+                    {sort:{timestamp: -1}, limit: 10}
+                ).lean()
             })
         }catch(err){
             throw err
@@ -41,17 +46,18 @@ module.exports = {
     getMoreLastContents : async (user, skip)=>{// get the content that reviewed only
         try{
             return dbConnect(async()=>{
-                if(user?.authz.isAdmin || user?.authz.isEditor)
-                    return await contentModel.find({isUnderReview: {$not:{$eq:true}}}, {comments:{replies:0}}).sort({date: -1}).skip(skip).limit(10)
-                else if(user?.authz.isAuthor)
-                    return await contentModel.find({isUnderReview: {$not:{$eq:true}}, 
+                const query = (user?.authz.isAdmin || user?.authz.isEditor)?
+                    {isUnderReview: {$not:{$eq:true}}}
+                : (user?.authz.isAuthor)?
+                    {isUnderReview: {$not:{$eq:true}}, 
                         $or:[
                             {hidden: {$not:{$eq:true}}},
                             {hidden: true, "author.id": String(user._id)}
                         ]
-                    }, {comments:{replies:0}}).sort({date: -1}).skip(skip).limit(10)
-                else
-                    return await contentModel.find({isUnderReview: {$not:{$eq:true}}, hidden: {$not:{$eq:true}}}, {comments:{replies:0}}).sort({date: -1}).skip(skip).limit(10)
+                    }
+                :   {isUnderReview: {$not:{$eq:true}}, hidden: {$not:{$eq:true}}}
+
+                return await contentModel.find(query, {img:1, name:1, timestamp:1, author:1, hidden:1}, {sort:{timestamp: -1}, skip, limit: 10}).lean()
             })
         }catch(err){
             throw err
@@ -62,22 +68,31 @@ module.exports = {
             return dbConnect(async ()=>{
                 if(data.normalUser){
                     return data.increaseViews?
-                        await contentModel.findByIdAndUpdate(data.id, {$inc:{views: 1}}, {select:{comments:{replies:0}}}).then(content=>{
+                        await contentModel.findByIdAndUpdate(data.id, {$inc:{views: 1}}, {select:{comments:{replies:0}}}).lean().then(content=>{
                             if(content?.comments.length > 10)
                                 content.comments = content.comments.slice(0, 10)
                             return content
                         }):
-                        await contentModel.findByIdAndUpdate(data.id, null, {select:{comments:{replies:0}}}).then(content=>{
+                        await contentModel.findByIdAndUpdate(data.id, null, {select:{comments:{replies:0}}}).lean().then(content=>{
                             if(content?.comments.length > 10)
                                 content.comments = content.comments.slice(0, 10)
                             return content
                         })
                 }else
-                    return await contentModel.findById(data.id,{comments:{replies:0}}).then(content=>{
+                    return await contentModel.findById(data.id,{comments:{replies:0}}).lean().then(content=>{
                         if(content?.comments.length > 10)
                             content.comments = content.comments.slice(0, 10)
                         return content
                     })
+            })
+        }catch(err){
+            throw err
+        }
+    },
+    getContentsByIDs: async contentsIDs=>{
+        try{
+            return dbConnect(async ()=>{
+                return await contentModel.find({_id:{$in: contentsIDs}}, {img:1, name:1, timestamp:1, author:1, hidden:1}).lean()
             })
         }catch(err){
             throw err
@@ -88,7 +103,7 @@ module.exports = {
     getContentByAuthorId: async id=>{
         try{
             return dbConnect(async ()=>{
-                return await contentModel.find({"author.id":id})
+                return await contentModel.find({"author.id":id}, {img:1, name:1, timestamp:1, author:1, hidden:1, isUnderReview:1}).lean()
             })
         }catch(err){
             throw err
@@ -100,7 +115,7 @@ module.exports = {
             isUnderReview = true 
         try{
             return dbConnect(async()=>{
-                return await new contentModel({...data, date: Date(), author: data.author, isUnderReview}).save()
+                return await new contentModel({...data, timestamp: Date.now(), author: data.author, isUnderReview}).save()
             })
         }catch(err){
             throw err
@@ -128,8 +143,8 @@ module.exports = {
         try{
             return dbConnect(async()=>{
                 return {
-                    oldImg: await contentModel.findOneAndUpdate({_id: data.contentID, "author.id": data.userID}, {...data.newContent}, {img: 1}).then(content=>content.img),
-                    newContent: await contentModel.findById(data.contentID)
+                    oldImg: await contentModel.findOneAndUpdate({_id: data.contentID, "author.id": data.userID}, {...data.newContent}, {img: 1}).lean().then(content=>content.img),
+                    newContent: await contentModel.findById(data.contentID).lean()
                 } 
             })
         }catch(err){
@@ -149,9 +164,9 @@ module.exports = {
         try{
             return dbConnect(async()=>{
                 if(user.authz.isAdmin || user.authz.isEditor)// if the request sender is admin or editor, then delete the account directly
-                    return await contentModel.findByIdAndDelete({_id: data.contentID}, {author:1, img:1})
+                    return await contentModel.findByIdAndDelete({_id: data.contentID}, {author:1, img:1}).lean()
                 // if not the apply the request if the sender is the content owner
-                return await contentModel.findByIdAndDelete({_id: data.contentID, "author.id": user._id}, {author:1, img:1})
+                return await contentModel.findByIdAndDelete({_id: data.contentID, "author.id": user._id}, {author:1, img:1}).lean()
             })
         }catch(err){
             throw err
@@ -163,7 +178,7 @@ module.exports = {
     getUnderReviewContents: async userID=>{
         try{
             return dbConnect(async()=>{
-                const underReview = await contentModel.find({isUnderReview: true});
+                const underReview = await contentModel.find({isUnderReview: true}).lean();
                 return {
                     selectFrom: underReview.filter(content=>!content.reviewer),
                     selected: underReview.filter(content=>content.reviewer==userID)
@@ -199,10 +214,10 @@ module.exports = {
         try {
             return await dbConnect(async ()=>{
                 return await contentModel.find(
-                    {name: { "$regex": contentName.split("").join(".*")+".*", "$options": "i" }, isUnderReview: false}, 
-                    {img:1, name:1, date:1, author:1}, 
+                    {name: { "$regex": ".*"+contentName+".*", "$options": "i" }, isUnderReview: {$not:{$eq:true}}}, 
+                    {img:1, name:1, timestamp:1, author:1}, 
                     {limit:20}
-                )
+                ).lean()
             })
         } catch (err) {
             throw err
@@ -213,8 +228,8 @@ module.exports = {
             return dbConnect(async ()=>{
                 const content = await contentModel.findByIdAndUpdate(data.contentID, {$set:{
                     isUnderReview: false,
-                    date: Date()
-                }},{select:{name:1, author:1}})
+                    timestamp: Date.now()
+                }},{select:{name:1, author:1, emailNotif:1}}).lean()
                 if(!content) return false
                 const notif = {msg: `Your content ${content.name} was approved and added to the website content`, href:"/content/id/"+String(content._id)}
                 const email = await addNotif({userID: data.authorID, notif})// to notify the author
@@ -227,11 +242,11 @@ module.exports = {
     setContentRejected: async data=>{
         try{
             return dbConnect(async ()=>{
-                const content = await contentModel.findByIdAndDelete(data.contentID, {select:{name:1, img:1, author:1}})
+                const content = await contentModel.findByIdAndDelete(data.contentID, {select:{name:1, img:1, author:1}}).lean()
                 if(!content) return false
                 const notif = {msg: `Your content ${content.name} was rejected for: "${data.reason}"`, href:"/account/profile/"+content.author.id}
-                const email =  await addNotif({userID: data.authorID, notif})// to notify the author
-                return {img:content.img, email, notif}
+                const {email, emailNotif} =  await addNotif({userID: data.authorID, notif})// to notify the author
+                return {img:content.img, email, emailNotif, notif}
             })
         }catch(err){
             throw err
@@ -247,7 +262,6 @@ module.exports = {
                     _id: new mongoose.Types.ObjectId(),
                     username:data.username,
                     userID:data.userID,
-                    userImg: data.userImg,
                     userIsAuthz: data.userIsAuthz,
                     timestamp: Date.now(),
                     body: data.body,
@@ -263,7 +277,7 @@ module.exports = {
                     $inc:{
                         commentsNum: 1
                     }
-                })
+                }, {new: true})
                 return comment
             })
         } catch (err) {
@@ -273,7 +287,7 @@ module.exports = {
     getComments: async data=>{
         try{
             return dbConnect(async ()=>{
-                return await contentModel.findById(data.id,{name:0, views:0, hidden:0, isUnderReview:0, comments:{replies:0}}).then(content=>{
+                return await contentModel.findById(data.id,{name:0, views:0, hidden:0, isUnderReview:0, comments:{replies:0}}).lean().then(content=>{
                     return content.comments.slice(parseInt(data.start), parseInt(data.start)+10)
                 })
             })
@@ -304,7 +318,6 @@ module.exports = {
                         $set:{
                             'comments.$.userID':null,
                             'comments.$.username':"User",
-                            'comments.$.userImg':"/user.jpg",
                             'comments.$.userIsAuthz':false,
                             'comments.$.body':"Deleted Message"
                         }
@@ -314,7 +327,6 @@ module.exports = {
                         $set:{
                             'comments.$.userID':null,
                             'comments.$.username':"User",
-                            'comments.$.userImg':"/user.jpg",
                             'comments.$.userIsAuthz':false,
                             'comments.$.body':"Deleted Message"
                         }
@@ -324,7 +336,6 @@ module.exports = {
                         $set:{
                             'comments.$.userID':null,
                             'comments.$.username':"User",
-                            'comments.$.userImg':"/user.jpg",
                             'comments.$.userIsAuthz':false,
                             'comments.$.body':"Deleted Message"
                         }
@@ -334,7 +345,6 @@ module.exports = {
                     $set:{
                         'comments.$.userID':null,
                         'comments.$.username':"User",
-                        'comments.$.userImg':"/user.jpg",
                         'comments.$.body':"Deleted Message"
                     }
                 })
@@ -398,7 +408,7 @@ module.exports = {
                         })
                     }
                 })
-                return await contentModel.findById(data.contentID)
+                return await contentModel.findById(data.contentID).lean()
                 .then(content=>content.comments.find(comment=>String(comment._id) == String(commentID)))
             })
         } catch (err) {
@@ -415,7 +425,6 @@ module.exports = {
                         _id: new mongoose.Types.ObjectId(),
                         username: data.replyOwnerName,
                         userID: data.replyOwnerID,
-                        userImg: data.replyOwnerImg,
                         userIsAuthz: data.userIsAuthz,
                         replyToID: data.replyToID? data.replyToID : data.commentID,// the id of the comment/reply that user reply on it
                         replyToUserID: data.replyToUserID,
@@ -428,18 +437,18 @@ module.exports = {
                     }}
                 })
                 if(data.replyToID) 
-                return await contentModel.findOneAndUpdate({_id: data.contentID, 'comments._id': commentID},{
-                    $inc: {'comments.$.replies.$[reply].repliesNum':1, 'comments.$.repliesNum':1}
-                },{
-                    arrayFilters:[{'reply._id': mongoose.Types.ObjectId.createFromHexString(data.replyToID)}],
-                    new: true
-                })
+                    return await contentModel.findOneAndUpdate({_id: data.contentID, 'comments._id': commentID},{
+                        $inc: {'comments.$.replies.$[reply].repliesNum':1, 'comments.$.repliesNum':1}
+                    },{
+                        arrayFilters:[{'reply._id': mongoose.Types.ObjectId.createFromHexString(data.replyToID)}],
+                        new: true
+                    }).lean()
                 else 
-                return await contentModel.findOneAndUpdate({_id: data.contentID, 'comments._id': commentID},{
-                    $inc: {'comments.$.repliesNum':1}
-                },{
-                    new: true
-                })
+                    return await contentModel.findOneAndUpdate({_id: data.contentID, 'comments._id': commentID},{
+                        $inc: {'comments.$.repliesNum':1}
+                    },{
+                        new: true
+                    }).lean()
             })
         } catch (err) {
             throw err
@@ -501,7 +510,6 @@ module.exports = {
                     await contentModel.updateOne({_id:data.contentID, 'comments._id': commentID},{$set:{
                         'comments.$.replies.$[reply].userID':null,
                         'comments.$.replies.$[reply].username': "User",
-                        'comments.$.replies.$[reply].userImg': "/user.jpg",
                         'comments.$.replies.$[reply].userIsAuthz':false,
                         'comments.$.replies.$[reply].body': "Deleted Message"
                     }},{
@@ -511,7 +519,6 @@ module.exports = {
                     await contentModel.updateOne({_id:data.contentID, 'comments._id': commentID},{$set:{
                         'comments.$.replies.$[reply].userID':null,
                         'comments.$.replies.$[reply].username': "User",
-                        'comments.$.replies.$[reply].userImg': "/user.jpg",
                         'comments.$.replies.$[reply].userIsAuthz':false,
                         'comments.$.replies.$[reply].body': "Deleted Message"
                     }},{
@@ -521,7 +528,6 @@ module.exports = {
                     await contentModel.updateOne({_id:data.contentID, 'author.id': data.user._id, 'comments._id': commentID},{$set:{
                         'comments.$.replies.$[reply].userID':null,
                         'comments.$.replies.$[reply].username': "User",
-                        'comments.$.replies.$[reply].userImg': "/user.jpg",
                         'comments.$.replies.$[reply].userIsAuthz':false,
                         'comments.$.replies.$[reply].body': "Deleted Message"
                     }},{
@@ -531,7 +537,6 @@ module.exports = {
                     await contentModel.updateOne({_id:data.contentID, 'comments._id': commentID},{$set:{
                         'comments.$.replies.$[reply].userID':null,
                         'comments.$.replies.$[reply].username': "User",
-                        'comments.$.replies.$[reply].userImg': "/user.jpg",
                         'comments.$.replies.$[reply].body': "Deleted Message"
                     }},{
                         arrayFilters:[{'reply._id': replyID, 'reply.userID': data.user._id}]
@@ -603,7 +608,7 @@ module.exports = {
                         })
                     }
                 })
-                return await contentModel.findById(data.contentID).then(content=> {
+                return await contentModel.findById(data.contentID).lean().then(content=> {
                     return content.comments.find(comment=> String(comment._id) == String(commentID))
                     ?.replies.find(reply=> String(reply._id) == String(replyID))}
                 )

@@ -7,8 +7,19 @@ const port = process.env.PORT || 3000;
 const cookieParser = require('cookie-parser');
 require("dotenv").config()
 
+/* create .env file and add the variables:
+    MONGODB_URI
+
+    SESSION_SECRET
+
+    EMAIL_USER
+    EMAIL_PASS
+
+    GOOGLE_CLIENT_ID
+    GOOGLE_CLIENT_SECRET
+*/
 const STORE = new sessionStore({
-    uri: process.env.MONGODB_URI,// create .env file and add the variable
+    uri: process.env.MONGODB_URI,
     collection:"sessions"
 })
 
@@ -18,13 +29,13 @@ app.use(express.urlencoded({extended:false}))
 app.use(express.json())
 app.use(cookieParser())
 app.use(session({
-    secret:'ed0d1d5cbbb81661fd20d8e8994238d6f3baa419bddbaa6d1bbe3aa9f78b6f2e',//change the secret string here
-    cookie: {/* 
-        sameSite: "none",
+    secret: process.env.SESSION_SECRET,
+    cookie: {
+        /* sameSite: "none",
         secure: true, */
-        maxAge: 3*24*60*60*1000
-    },//changing in the maxAge value requires changing in account.control line 83 & verif.control line 18
-    resave: true,
+        maxAge: 3*24*60*60*1000 //changing the maxAge value requires changing in account.control line 83 & verif.control line 18 & oauth.controller line 9
+    },
+    resave: false,
     saveUninitialized: false,
     store:STORE
 }))
@@ -39,11 +50,9 @@ app.use((req, res) => {
     res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-app.all('*',(req,res)=>{res.status(404).json({msg:'Route Not Found!'})})
-
 const http = require("http");
 const server = http.createServer(app)
-/* set socket.io to update the pages without need to reload it */
+/* set socket.io to update the pages without refresh it */
 const Server = require("socket.io").Server
 const io = new Server(server);
 

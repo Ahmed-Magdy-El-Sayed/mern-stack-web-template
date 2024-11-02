@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router();
 
-const {getContents}= require('../controller/content.controller');
+const {getContents}= require('../controllers/content.controller');
 
 router.get('/', getContents)
 router.use('/account',require('./account.router'))

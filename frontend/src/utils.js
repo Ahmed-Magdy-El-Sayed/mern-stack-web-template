@@ -1,8 +1,8 @@
 
 const contentRoute = '/content/id/'
 const profileRoute = '/account/profile/'
-const accountImagesPath = process.env.REACT_APP_API_SERVER+'/images/account/'
-const contentImagesPath = process.env.REACT_APP_API_SERVER+'/images/content/'
+const accountImagesPath = imgPath=> URL.parse(imgPath)? imgPath : (process.env.REACT_APP_API_SERVER+"/images/account/"+imgPath)
+const contentImagesPath = imgPath=> URL.parse(imgPath)? imgPath : (process.env.REACT_APP_API_SERVER+"/images/content/"+imgPath)
 
 
 const calcPassedTime = timestamp=>{// calc the time that passed from post the comment
@@ -138,11 +138,11 @@ const passwordValidation = pass=>{
 }
 
 const defaultContentImg = e=>{
-    e.currentTarget.src = contentImagesPath + "/content.png"
+    e.currentTarget.src = process.env.REACT_APP_API_SERVER+ "/images/content/default.png"
 }
 
 const defaultUserImg = e=>{
-    e.currentTarget.src = accountImagesPath + "/user.jpg"
+    e.currentTarget.src = process.env.REACT_APP_API_SERVER+ "/images/account/default.png"
 }
 
 const URLSearchParamsData = form=>{

@@ -6,7 +6,7 @@ import { addAlert } from '../../redux/alertSlice';
 import { Link, useNavigate } from 'react-router-dom';
 import { socket } from '../../socket';
 import { addWarnings } from '../../redux/warningSlice';
-import { addUser } from '../../redux/userSlice';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export default function Login(){
     const [verifPage, setVerifPage] = useState();
@@ -45,7 +45,6 @@ export default function Login(){
                     window.localStorage.setItem("warnings", JSON.stringify(data.warnings))
                     dispatch(addWarnings(data.warnings));
                 }
-                dispatch(addUser(data.user))
                 socket.emit("makeRoom", data.user._id, data.user.role) //to can emit specific functions for each user / user role
                 navigate("/")
             }
@@ -64,10 +63,10 @@ export default function Login(){
         {verifPage? 
             <Verif id={verifPage.id} expiration={verifPage.expiration}/>
         :
-            <div className="w-100 row text-center justify-content-center">
+            <div className="container row mx-auto text-center justify-content-center">
                 <h1 className="text-primary mt-5">Login</h1>
-                <form className="login col-11 col-sm-6 m-auto needs-validation mt-5" onSubmit={formSubmit}>
-                    <input className="form-control" type="name" name="nameOrEmail" placeholder="Enter your name or email" required />
+                <form className="login col-11 col-sm-10 col-md-7 col-lg-5 needs-validation mt-5" onSubmit={formSubmit}>
+                    <input className="form-control" type="name" name="nameOrEmail" placeholder="Enter your username or email" required />
                     
                     <input className="form-control mt-3 mb-2" type="password" name="password" placeholder="Enter password" required />
                     
@@ -81,8 +80,8 @@ export default function Login(){
                     </button>
                 </form>
                 <div className="login-option">
-                    <span className="text-center">do not have account? </span>
-                    <Link className="text-decoration" to="/account/signup">
+                    <div className="text-center">Do not have account? </div>
+                    <Link to="/account/signup">
                         signup
                     </Link>
                     {ban && 
@@ -91,6 +90,15 @@ export default function Login(){
                             <p className="m-0">{"The ban end at " + new Date(parseInt(ban.ending)).toLocaleString("en")}</p>
                         </div>
                     }
+                    <div className='d-flex justify-content-center align-items-center mb-2'>
+                        <hr className='w-25'/>
+                        <span className='mx-3'> or </span>
+                        <hr className='w-25'/>
+                    </div>
+                    <a href={process.env.REACT_APP_API_SERVER+'/account/oauth/google'} className='rounded btn btn-primary'>
+                    <FontAwesomeIcon className='fs-4 me-3' icon='fa-brands fa-google'/>
+                        Continue With Google
+                    </a>
                 </div>
             </div>
         }

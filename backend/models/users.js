@@ -4,9 +4,14 @@ const bcrypt = require("bcrypt")
 const crypto = require("crypto")
 
 const uSchema = new mongoose.Schema({
-    name: {type: String, trim: true},
+    firstName:  {type: String, trim: true},
+    lastName:  {type: String, trim: true},
+    username: {type: String, trim: true},
     email: String,
-    img:{type: String, default: "user.jpg"},
+    img:{type: String, default: "default.png"},
+    registrationDate: {type: String, default: Date.now()},
+    birthdate: String,
+    address: String,
     password: String,
     passwordResetCode: String,
     verification: {
@@ -29,33 +34,69 @@ const uSchema = new mongoose.Schema({
     warning: {
         current:[String],
         all: [String],
-    }
+    },
+    favoriteList: {type: Array, default:[]},
+    emailNotif: {type: Boolean, default: true},
+    oauth: Boolean
 })
 
 const usersModel = new mongoose.model('user',uSchema)
 
 module.exports ={
+    userNameExist: username =>{
+        try {
+            return dbConnect(async ()=>{
+                return await usersModel.findOne({username}, {_id:1}).then(user=>user?true:false);
+            })
+        } catch (err) {
+            throw err
+        }
+    },
     getUser: userID =>{
         try {
             return dbConnect(async ()=>{
-                return await usersModel.findById(userID, {notifs:0}).lean()
+                return await usersModel.findById(userID, {notifs:0, favoriteList:0}).lean()
+            })
+        } catch (err) {
+            throw err
+        }
+    },
+    getUsersImgs:async comments =>{
+        let commentsOwnersImages={};
+        comments.forEach(comment=>{// to prevent the repetition
+            if(comment.userID)
+                commentsOwnersImages[comment.userID]=null;
+        })
+        try {
+            return await dbConnect(async ()=>{
+                return await usersModel.find({_id: {$in: Object.keys(commentsOwnersImages) }},{img:1}).lean().then(users=>{
+                    users.forEach(user=>{
+                        commentsOwnersImages[user._id] = user.img
+                    })
+                    return commentsOwnersImages
+                })
             })
         } catch (err) {
             throw err
         }
     },
     createUser: async data =>{//for signup 
-        if(!(/^[0-9a-zA-Z_]{3,}$/g.test(data.name)))
-            return "The name should be 3 or more of numbers, upper or lower characters, or underscore only"
+        if(!(/^[A-Za-z][a-zA-Z_]{1,}$/g.test(data.firstName)))
+            return {err: "The first name should be 3 or more of alphabet characters only"}
+        if(!(/^[A-Za-z][a-zA-Z_]{1,}$/g.test(data.lastName)))
+            return {err: "The last name should be 3 or more of numbers, alphabet characters only"}
         
-        if(!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g.test(data.email)) return "Invalid Email"
+        if(!(/^[A-Za-z][0-9a-zA-Z_]{2,}$/g.test(data.username)))
+            return {err: "The username should be 3 or more of numbers, upper or lower characters, or underscore only"}
+        
+        if(!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g.test(data.email)) return {err: "Invalid Email"}
 
-        if(!/.*[a-z]/g.test(data.password)) return "Password should contan at least one lowercase";
-        if(!/.*\d/g.test(data.password)) return "Password should contan at least one number";
-        if(!/.*[A-Z]/g.test(data.password)) return "Password should contan at least one uppercase";
-        if(!/.{8,}/g.test(data.password)) return "Password should be at least 8 or more characters";
+        if(!/.*[a-z]/g.test(data.password)) return {err: "Password should contan at least one lowercase"};
+        if(!/.*\d/g.test(data.password)) return {err: "Password should contan at least one number"};
+        if(!/.*[A-Z]/g.test(data.password)) return {err: "Password should contan at least one uppercase"};
+        if(!/.{8,}/g.test(data.password)) return {err: "Password should be at least 8 or more characters"};
         
-        if(!data.licenceAccept) return "You must accept the licence"
+        if(!data.licenceAccept) return {err: "You must accept the licence"}
         delete data.licenceAccept
 
         try {
@@ -63,10 +104,10 @@ module.exports ={
                 data.password = val;
             })
             return await dbConnect(async ()=>{
-                return await usersModel.findOne({ name: data.name }).then(async exist=>{
-                    if(exist) return "the name is already used"
+                return await usersModel.findOne({ username: data.username }).then(async exist=>{
+                    if(exist) return {err: "the username is already used"}
                     return await usersModel.findOne({ email: data.email }).then(async exist=>{
-                        if(exist) return "the email is already used"
+                        if(exist) return {err: "the email is already used"}
                         else {
                             const {_id: id} = await new usersModel(data).save()
                             return {id: id.toString()}
@@ -78,19 +119,42 @@ module.exports ={
             throw err
         }
     },
+    saveOauthUser: async user =>{//for signup 
+        try {
+            return await dbConnect(async ()=>{
+                return await usersModel.findOne({ email: user.email }, {notifs: 0, password: 0, favoriteList:0}).lean().then(async existUser=>{
+                    if(existUser)
+                        return {isNew: false, data: existUser}
+                    
+                    return {isNew: true, data: await new usersModel(user).save()}
+                })
+            })
+        } catch (err) {
+            throw err
+        }
+    },
+    setUsername: async (userID, username) =>{//for signup 
+        try {
+            return await dbConnect(async ()=>{
+                await usersModel.findByIdAndUpdate(userID, { $set:{username} })
+            })
+        } catch (err) {
+            throw err
+        }
+    },
     authUser: async data =>{//for login 
         let user; 
         try {
             return dbConnect(async ()=>{
                 if(data.nameOrEmail.includes("@"))
-                    user = await usersModel.findOne({email: data.nameOrEmail}, {notifs:0}).lean()
+                    user = await usersModel.findOne({email: data.nameOrEmail, oauth: {$not: {$eq: true}} }, {notifs:0, favoriteList:0}).lean()
                 else
-                    user = await usersModel.findOne({name: data.nameOrEmail}, {notifs:0}).lean()
-                if(!user) return "invalid name/email or password"
+                    user = await usersModel.findOne({username: data.nameOrEmail, oauth: {$not: {$eq: true}}}, {notifs:0, favoriteList:0}).lean()
+                if(!user) return {err: "invalid username/email or password"}
                 else {
                     return await bcrypt.compare(data.password, user.password)// check the password
                     .then(async valid =>{
-                        if(!valid) return "invalid name/email or password"
+                        if(!valid) return {err: "invalid username/email or password"}
                         if(user.passwordResetCode)// if the user made request to reset password, then remember it
                             await usersModel.findByIdAndUpdate(user._id, {$set:{passwordResetCode: null}})
                         delete user.password;
@@ -130,14 +194,14 @@ module.exports ={
     createResetCode: async email=>{
         try {
             return await dbConnect(async ()=>{
-                const resetCode = crypto.randomBytes(6).toString('hex');
+                const resetCode = crypto.randomBytes(12).toString('hex');
                 return await usersModel.findOneAndUpdate(
                     {email}, 
                     {$set:{passwordResetCode: resetCode}}, 
                     {select: {_id:1}}
-                ).then( account=>{
+                ).lean().then( account=>{
                     if(!account)
-                        return "There is no account match this email"
+                        return {err: "There is no account match this email"}
                     return {
                         id: account._id,
                         resetCode: resetCode
@@ -149,6 +213,10 @@ module.exports ={
         }
     },
     resetAccountPass: async data=>{
+        if(!/.*[a-z]/g.test(data.password)) return {err: "Password should contan at least one lowercase"};
+        if(!/.*\d/g.test(data.password)) return {err: "Password should contan at least one number"};
+        if(!/.*[A-Z]/g.test(data.password)) return {err: "Password should contan at least one uppercase"};
+        if(!/.{8,}/g.test(data.password)) return {err: "Password should be at least 8 or more characters"};
         try {
             return await dbConnect(async ()=>{
                 return await usersModel.findOne({_id: data.id, passwordResetCode: data.resetCode}, {select: {_id: 1}}).then(async account=>{
@@ -200,7 +268,7 @@ module.exports ={
                         expire: Date.now() + 15 * 60 * 1000 // make expiration 15 minute
                     }}, 
                     {new : true}
-                ).then( user=>{
+                ).lean().then( user=>{
                     return user? {email:user.email, verif:user.verification} : false
                 })
             })
@@ -214,7 +282,7 @@ module.exports ={
                 return await usersModel.findOne(
                     {_id: id, verification: { $exists: true }}, 
                     {email: 1,verification: 1}
-                ).then( user=>{
+                ).lean().then( user=>{
                     return user? {email:user.email, verif:user.verification} : "verified"
                 })
             })
@@ -225,15 +293,22 @@ module.exports ={
     updateProfile: async data=>{
         try {
             return dbConnect(async()=>{
-                let changedImg;
                 let error = false;
-                if(data.imageName){
-                    await usersModel.updateOne({_id:data.userID}, {$set:{img:data.imageName}}).then(()=>{
-                        changedImg = data.imageName
+                let setObj = {};
+                if(data.imageName || data.birthdate || data.address){
+                    if(data.imageName) setObj.img = data.imageName 
+                    if(data.firstName) setObj.firstName = data.firstName 
+                    if(data.lastName) setObj.lastName = data.lastName 
+                    if(data.birthdate) setObj.birthdate = data.birthdate 
+                    if(data.address) setObj.address = data.address 
+                    await usersModel.updateOne({_id:data.userID}, {$set:setObj}).catch(err=>{
+                        console.log(err)
+                        error= "Something Went Wrong, Try Again!"
                     })
                 }
+
                 if(data.oldPass){
-                    await usersModel.findById(data.userID,{password:true}).then(async obj=>{
+                    await usersModel.findById(data.userID,{password:1}).lean().then(async obj=>{
                         await bcrypt.compare(data.oldPass, obj.password).then(async matched=>{
                             if(matched){
                                 await bcrypt.hash(data.newPass, 10).then(async password=>{
@@ -245,8 +320,9 @@ module.exports ={
                         })
                     })
                 }
+
                 if(error) return {err: error};
-                if(changedImg) return changedImg
+                if(Object.keys(setObj).length) return setObj
             })
         } catch (err) {
             throw err
@@ -294,10 +370,21 @@ module.exports ={
     },
     
     /* start the function for profile page */
-    getAuthorData:async userID =>{
+    getProfileData:async (userID, reqIsAdmin) =>{
         try {
             return await dbConnect(async ()=>{
-                return await usersModel.findById(userID,{name:1, img:1, authz:1})
+                return reqIsAdmin? 
+                    await usersModel.findById(userID,{password:0, notifs:0, favoriteList:0}).lean()
+                :    await usersModel.findById(userID,{username:1, img:1, authz:1}).lean()
+            })
+        } catch (err) {
+            throw err
+        }
+    },
+    toggleEmailNotif: async (userID, val) =>{
+        try {
+            return await dbConnect(async ()=>{
+                await usersModel.findByIdAndUpdate(userID,{$set:{emailNotif: val}})
             })
         } catch (err) {
             throw err
@@ -306,67 +393,80 @@ module.exports ={
     /* end the function for profile page */
     
     /* start the function for accountsControl page */
-    getFrist10Accounts: async ()=>{
+    getfirst50Accounts: async ()=>{
         try {
             return await dbConnect(async ()=>
                 await usersModel.find({},
-                    {password: 0, notifs: 0, notifsNotReaded: 0}, 
-                    {sort:{name:1}, limit:10}
-                ).then(accounts=>{
-                    const groupedAccs = {users:[], authors:[], editors:[], admins:[]};
-                    accounts.forEach(acc=>{
-                        if(acc.authz.isAdmin)
-                            groupedAccs.admins.push(acc)
-                        else if(acc.authz.isEditor)
-                            groupedAccs.editors.push(acc)
-                        else if(acc.authz.isAuthor)
-                            groupedAccs.authors.push(acc)
-                        else
-                            groupedAccs.users.push(acc)
+                    {password: 0, notifs: 0, notifsNotReaded: 0, favoriteList:0}, 
+                    {sort:{username:1}, limit:50}
+                ).lean().then(accounts=>
+                    accounts.map(acc=>{
+                        acc.role= acc.authz.isAdmin? "admin" : acc.authz.isEditor? "editor" : acc.authz.isAuthor? "author" : "user"
+                        delete acc.authz
+                        return acc
                     })
-                    return groupedAccs
-                })
+                )
             )
         } catch (err) {
             throw err
         }
     },
-    getAccountsByRole: async data=>{
+    getNextAccounts: async data=>{
         try {
             return await dbConnect(async ()=>{
-                if(data.accountType == 'users')
-                    return await usersModel.find(
-                        {$nor:[{"authz.isAdmin": true}, {"authz.isEditor": true}, {"authz.isAuthor": true}]}, 
-                        {password: 0, notifs: 0, notifsNotReaded: 0}, 
-                        {sort:{name:1}, skip:data.skip, limit: 10}
-                    )
-                else if(data.accountType == 'authors')
-                    return await usersModel.find(
-                        {"authz.isAuthor": true}, 
-                        {password: 0, notifs: 0, notifsNotReaded: 0}, 
-                        {sort:{name:1}, skip:data.skip, limit: 10}
-                    )
-                else if(data.accountType == 'editors')
-                    return await usersModel.find(
-                        {"authz.isEditor": true}, 
-                        {password: 0, notifs: 0, notifsNotReaded: 0}, 
-                        {sort:{name:1}, skip:data.skip, limit: 10}
-                    )
-                else
-                    return await usersModel.find(
-                        {"authz.isAdmin": true}, 
-                        {password: 0, notifs: 0, notifsNotReaded: 0}, 
-                        {sort:{name:1}, skip:data.skip, limit: 10}
-                    )
+                const query = data.accountType === 'user'?
+                    {$nor:[{"authz.isAdmin": true}, {"authz.isEditor": true}, {"authz.isAuthor": true}]}
+                :data.accountType === 'author'?
+                    {"authz.isAuthor": true}
+                :data.accountType === 'editor'?
+                    {"authz.isEditor": true}
+                :data.accountType === 'admin'?
+                    {"authz.isAdmin": true}
+                :{};
+                
+                if(data.searchVal)
+                    query[data.searchBy] = { "$regex": `.*${data.searchVal}.*`, "$options": "i" }
+
+                return await usersModel.find(
+                    query, 
+                    {password: 0, notifs: 0, notifsNotReaded: 0, favoriteList:0}, 
+                    {sort:{username:1}, skip:data.skip, limit:10}
+                ).lean().then(accounts=>
+                    accounts.map(acc=>{
+                        acc.role= acc.authz.isAdmin? "admin" : acc.authz.isEditor? "editor" : acc.authz.isAuthor? "author" : "user"
+                        delete acc.authz
+                        return acc
+                    })
+                )
             })
         } catch (err) {
             throw err
         }
     },
-    getAccountsByName: async accountName=>{
+    searchAccounts: async search=>{
         try {
             return await dbConnect(async ()=>{
-                return await usersModel.find({name: { "$regex": accountName.split("").join(".*")+".*", "$options": "i" }}, null, {limit:100})
+                const query = search.accountType == 'user'?
+                    {$nor:[{"authz.isAdmin": true}, {"authz.isEditor": true}, {"authz.isAuthor": true}]}
+                :search.accountType == 'author'?
+                    {"authz.isAuthor": true}
+                :search.accountType == 'editor'?
+                    {"authz.isEditor": true}
+                :search.accountType == 'admin'?
+                    {"authz.isAdmin": true}
+                :{};
+                query[search.by]= { "$regex": `.*${search.val}.*`, "$options": "i" };
+
+                return await usersModel.find(query, 
+                    {password: 0, notifs: 0, notifsNotReaded: 0, favoriteList:0},
+                    {sort:{username:1}, limit:10}
+                ).lean().then(accounts=>
+                    accounts.map(acc=>{
+                        acc.role= acc.authz.isAdmin? "admin" : acc.authz.isEditor? "editor" : acc.authz.isAuthor? "author" : "user"
+                        delete acc.authz
+                        return acc
+                    })
+                );
             })
         } catch (err) {
             throw err
@@ -447,12 +547,33 @@ module.exports ={
         }
     },
     /* end the function for accountsControl page */
+    getFavoriteList: async userID=>{
+        try {
+            return await dbConnect(async ()=>{
+                return await usersModel.findById(userID, {favoriteList:1}).lean().then(user=>user.favoriteList)
+            })
+        } catch (err) {
+            throw err
+        }
+    },
+    toggleFavoriteContent: async(userID, contentID)=>{
+        try {
+            return await dbConnect(async ()=>{
+                const list = await usersModel.findById(userID, {favoriteList:1}).lean().then(user=>user.favoriteList); 
+                list.includes(contentID)?
+                    await usersModel.findByIdAndUpdate(userID, {$pull: {favoriteList: contentID}})
+                :   await usersModel.findByIdAndUpdate(userID, {$push: {favoriteList: contentID}})
+            })
+        } catch (err) {
+            throw err
+        }
+    },
 
     /* start the functions for notifications */
     getReviewersNotifs: async ()=>{// notify the admins and the editors that there is new content to review when author submit content
         try {
             return await dbConnect(async ()=>{
-                return await usersModel.find({$or:[{"authz.isAdmin":true}, {"authz.isEditor":true}]}, {email:1, notifs:1})
+                return await usersModel.find({$or:[{"authz.isAdmin":true}, {"authz.isEditor":true}]}, {email:1, notifs:1, emailNotif:1}).lean()
             })
         } catch (err) {
             throw err
@@ -461,16 +582,18 @@ module.exports ={
     addNotif: async data=>{// add a notification to specific user
         try {
             return await dbConnect(async ()=>{
-                return await usersModel.findByIdAndUpdate(data.userID, {$push:{
-                    notifs:{ 
-                        $each: [data.notif],
-                        $position: 0
+                return await usersModel.findByIdAndUpdate(data.userID, 
+                    {$push:{
+                        notifs:{ 
+                            $each: [data.notif],
+                            $position: 0
+                        },
+                        },$inc:{
+                            notifsNotReaded: 1
+                        }
                     },
-                    },$inc:{
-                        notifsNotReaded: 1
-                    }
-                },
-                {select:{email:1}})
+                    {select:{email:1, emailNotif:1}
+                }).lean()
             })
         } catch (err) {
             throw err

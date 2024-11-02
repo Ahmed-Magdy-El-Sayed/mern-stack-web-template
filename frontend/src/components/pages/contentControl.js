@@ -1,44 +1,27 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { socket } from '../../socket';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { addAlert } from '../../redux/alertSlice';
-import { useNavigate } from 'react-router-dom';
-import Loader from '../loader';
-import ContentCard from '../contentCard';
+import { useLoaderData } from 'react-router-dom';
+import ContentCard from '../shared/contentCard';
 import { contentImagesPath, defaultContentImg } from '../../utils';
-import ContentSearch from '../contentSearch';
+import ContentSearch from '../shared/contentSearch';
 
 let newSliderData = {};
-export default function ContentReview(){
-    const [contents, setContents] = useState();
-    const [sliderContents, setSliderContents] = useState([]);
+export default function ContentControl(){
+    const loaderData = useLoaderData();
+    const mode = useSelector(state=>state.mode)
+    const [contents, setContents] = useState(loaderData.contents);
+    const [sliderContents, setSliderContents] = useState(loaderData.sliderContents);
     const [addSlideOption, setAddSlideOption] = useState("exist-content");
     const spinnersControl = useRef([]);
     const imgRef = useRef();
     const modalCloseRef = useRef();
     const previewRef = useRef();
     const dispatch = useDispatch();
-    const navigate = useNavigate();
     
+
     useEffect(()=>{
-        fetch(process.env.REACT_APP_API_SERVER+"/content/control", {credentials: "include"}).then(async res=>{
-            if(res.ok)
-                return await res.json()
-            else
-                throw await res.json()
-        }).then(({contents, sliderContents, msg})=>{
-            setContents(contents)
-            setSliderContents(sliderContents)
-            msg && dispatch(addAlert({type: "success", msg}))
-        }).catch(err=>{
-            if(err.msg)
-                dispatch(addAlert({type:"danger", msg: err.msg}))
-            else{
-                console.error(err)
-                dispatch(addAlert({type:"danger", msg: "Something Went Wrong, Try Again!"}))
-            }
-            if(err?.msg === "Forbidden") navigate("/")
-        })
         socket.on("newContentToReview", content=>{
             setContents(contents=>{
                 const selectFrom = [...contents.selectFrom, content]
@@ -131,7 +114,7 @@ export default function ContentReview(){
     }
 
     const selectContent = content=>{
-        imgRef.src = process.env.REACT_APP_API_SERVER+"/content/"+content.img
+        imgRef.src = contentImagesPath(content.img)
         newSliderData = {
             img: content.img,
             title: content.name,
@@ -235,8 +218,8 @@ export default function ContentReview(){
     return <>
         <div className="container mt-3">
             {/* Slider Control Section */}
-            <h1>Slider Content</h1>
-            <div className='slider-content'>
+            <h1 className='text-center'>Slider Content</h1>
+            <div className='slider-content p-3 border rounded'>
                 <div className='options d-flex justify-content-end gap-3 mb-3'>
                     <button className='btn btn-primary' data-bs-toggle="modal" data-bs-target=".modal.add-slide">Add</button>
                     
@@ -246,11 +229,11 @@ export default function ContentReview(){
                     </button>
 
                     <div className="modal add-slide fade">
-                        <div className="modal-dialog">
-                            <div className="modal-content">
+                        <div className="modal-dialog modal-fullscreen-md-down">
+                            <div className={`modal-content bg-${mode}`}>
                                 <div className="modal-header">
                                     <h1 className="modal-title fs-5">Add Slide</h1>
-                                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" ref={modalCloseRef}></button>
+                                    <button type="button" className={`btn-close ${mode==='dark'&&'bg-secondary'}`} data-bs-dismiss="modal" aria-label="Close" ref={modalCloseRef}></button>
                                 </div>
                                 <div className="modal-body">
                                     <button 
@@ -262,7 +245,7 @@ export default function ContentReview(){
                                     </button>
                                     {addSlideOption === "custom-content"?
                                         <div className='custom-content'>
-                                            <img className='preview-image w-100' alt='' ref={previewRef}/>
+                                            <img className='preview-image w-50 d-block mx-auto mb-3 rounded' alt='' ref={previewRef}/>
                                             <span className="input-group-text w-50">Image:</span>
                                             <input
                                                 className="form-control mb-3"
@@ -318,16 +301,18 @@ export default function ContentReview(){
                     <div key={uniqueKeysGenerator()}>
                         <div className='slide row'>
                             <div className='col-3'>
-                                <img className='rounded-3' style={{width: "50px"}} src={content.imgSrc?content.imgSrc:contentImagesPath+content.img} onError={defaultContentImg}/>
+                                <img className='rounded-3' style={{width: "50px"}} src={content.imgSrc?content.imgSrc:contentImagesPath(content.img)} onError={defaultContentImg}/>
                             </div>
                             <h5 className='col-3'>{content.title}</h5>
                             <span className='slide-count col-3'>
                                 <label htmlFor='slideCount'>slide number:</label>
                                 <input id='slideCount' type='number' defaultValue={i+1} min={1} max={sliderContents.length} style={{width: "35px"}} onInput={e=>{ChangeSlideNum(i, Number(e.currentTarget.value)-1)}}/>
                             </span>
-                            <button className='btn btn-outline-danger col-1' onClick={()=>{deleteSlide(i)}}>
-                                <div className="btn-close m-auto"></div>
-                            </button>
+                            <div className='col-1'>
+                                <button className='btn btn-outline-danger' onClick={()=>{deleteSlide(i)}}>
+                                    <div className="btn-close m-auto"></div>
+                                </button>
+                            </div>
                         </div>
                         {i < sliderContents.length-1? <hr/> : null}
                     </div>
@@ -335,12 +320,12 @@ export default function ContentReview(){
             </div>
 
             {/* Content Review Section */}
-            <h1 className='mt-5'>Content Review</h1>
-            <h2>Selected Content</h2>
-            <p>The content that you selected to review</p>
-            <div className="selected-content d-flex flex-wrap justify-content-center gap-3">
-                {contents?
-                    contents.selected.length ?
+            <h1 className='mt-5 text-center'>Content Review</h1>
+            <div className='content-review p-3 border rounded'>
+                <h3>Selected Content</h3>
+                <p>The content that you selected to review</p>
+                <div className="selected-content d-flex flex-wrap justify-content-center gap-3">
+                    {contents.selected.length ?
                         contents.selected.map((content, i) =>
                             <ContentCard key={content._id} content={content}>
                                 <button className="unselect btn btn-outline-danger mt-3" type="button" onClick={e => unselect(e, content._id, (i+1)*2-1)}>
@@ -349,18 +334,14 @@ export default function ContentReview(){
                                 </button>
                             </ContentCard>
                         )
-                    :
-                        <h3 className="alert alert-secondary w-100 text-center">No content selected to review</h3>
-                : 
-                    <Loader/>
-                }
-            </div>
-            <hr />
-            <h2>Content To Select</h2>
-            <p>The content that waiting to be selected to review</p>
-            <div className="to-select-content d-flex flex-wrap justify-content-center gap-3">
-                {contents?
-                    contents.selectFrom.length ?
+                    : <p className="text-secondary w-100 text-center">No content selected to review</p>
+                    }
+                </div>
+                <hr />
+                <h3>Content To Select</h3>
+                <p>The content that waiting to be selected to review</p>
+                <div className="to-select-content d-flex flex-wrap justify-content-center gap-3">
+                    {contents.selectFrom.length ?
                         <div className="to-select-content d-flex flex-wrap justify-content-center gap-3">
                             {contents.selectFrom.map((content, i) => (
                                 <ContentCard key={content._id} content={content}>
@@ -371,11 +352,9 @@ export default function ContentReview(){
                                 </ContentCard>
                             ))}
                         </div>
-                    :
-                        <h3 className="alert alert-secondary w-100 text-center">No content waiting to review</h3>
-                : 
-                    <Loader/>
-                }
+                    : <p className="text-secondary w-100 text-center">No content waiting to review</p>
+                    }
+                </div>
             </div>
         </div>
     </>

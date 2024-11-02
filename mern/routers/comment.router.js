@@ -8,21 +8,22 @@ const {
     removeReply, editReply, loveReply, 
     makeCommentReact, makeReplyReact, 
     getReplies
-}= require('../controller/comment.controller');
+}= require('../controllers/comment.controller');
 
-const {isLoggedIn, isAuthor} = require('../controller/middelwares');
+const {isLoggedIn, isAuthor} = require('../controllers/middelwares');
 
-router.post('/comments', isLoggedIn, setComment)
+router.post('/comments/add', isLoggedIn, setComment)
 router.get('/:id/comments/:start', getMoreComments)
 router.put('/comments/edit', isLoggedIn, editComment)
 router.delete('/comments/delete', isLoggedIn, removeComment)
 router.post('/comments/love', isAuthor, loveComment)
 router.post('/comments/react', isLoggedIn, makeCommentReact)
-router.get('/:contentID/comment/:commentID/replies/:replyToID', getReplies)
+
 router.post('/replies/add', isLoggedIn, replyComment)
+router.get('/:contentID/comment/:commentID/replies/:replyToID', getReplies)
+router.put('/replies/edit', isLoggedIn, editReply)
 router.delete('/replies/delete', isLoggedIn, removeReply)
 router.post('/replies/love', isAuthor, loveReply)
-router.put('/replies/edit', isLoggedIn, editReply)
 router.post('/replies/react', isLoggedIn, makeReplyReact)
 
 

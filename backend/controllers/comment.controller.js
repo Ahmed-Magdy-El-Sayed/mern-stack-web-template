@@ -6,7 +6,7 @@ const {
     setLoveReply, reactComment,
     reactReply, getRepliesByCommentID
 } = require('../models/contents');
-const { addNotif } = require('../models/users');
+const { addNotif, getUsersImgs } = require('../models/users');
 
 const { sendEmail } = require('./sendEmail');
 const validateId = require('./validateId');
@@ -15,23 +15,31 @@ const setComment = (req, res, next)=>{
     const user = req.session.user
     const data = {
         ...req.body,
-        username:user.name, 
+        username:user.username, 
         userID:user._id, 
-        userImg:user.img,
         userIsAuthz: (user.authz.isAdmin || user.authz.isEditor || user.authz.isAuthor)
     }
     if(!validateId(req.body.contentID))
         return res.status(400).json({msg:"Bad Request! Try Again."})
     addComment(data).then(comment=>{
-        res.status(201).json(comment)
+        res.status(201).json({...comment, userImg:user.img})
     }).catch(()=> next(err))
 }
 
+// first 10 comments are got with getContent func in content.controller.js
 const getMoreComments = (req, res, next)=>{
     if(!validateId(req.params.id))
         return res.status(400).json({msg:"Bad Request! Try Again."})
-    getComments(req.params).then( comments=>{
-        res.status(200).json(comments)
+    getComments(req.params).then(async comments=>{
+        await getUsersImgs(comments).then(usersImgs=>{
+            comments.forEach(comment=>{
+                if(comment.userID)
+                    comment.userImg =  usersImgs[comment.userID]
+            })
+            res.status(200).json(comments)
+        }).catch(err=>{ 
+            next(err)
+        })
     }).catch( err=> next(err))
 }
 
@@ -71,29 +79,29 @@ const replyComment = (req, res, next)=>{
     const user = req.session.user
     const data = {
         ...req.body,
-        replyOwnerName: user.name,
+        replyOwnerName: user.username,
         replyOwnerID: user._id,
-        replyOwnerImg: user.img,
         userIsAuthz: user.authz.isAdmin || user.authz.isEditor || user.authz.isAuthor
     }
     if(!validateId(data.contentID) && !validateId(data.commentID))
         return res.status(400).json({msg:"Bad Request! Try Again."})
+
     addReply(data).then(async result=>{
         if(!result) return res.status(500).end()
-        const commentID = data.commentID
-        result.comments = result.comments.find(comment=> comment._id==commentID)
-        const newReply = result.comments[0].replies.pop()
+        const commentID = data.commentID;
+        const newReply = result.comments.find(comment=> String(comment._id)==String(commentID)).replies.pop();
 
-        res.status(201).json(newReply)
+        res.status(201).json({...newReply, userImg: user.img})
         if(newReply.replyToUserID != String(user._id)){
-            const email = await addNotif({userID: newReply.replyToUserID, notif:{msg:`There is new reply on your comment in the content ${result.name}`, href:'/content/id/'+result._id}})
-            await sendEmail(email, {
-                title: "New Reply In Your Comment",
-                content:`
-                <h5>There is new reply in your comment in the content ${result.name} <a href="${process.env.REACT_APP_URL}/content/id/${result._id}">click here</a> to go to the content</h5>
-                <p style="white-space: pre-wrap;"><bold>The reply:</bold>\n "${newReply.body}"</p>
-                `
-            })
+            const {email, emailNotif} = await addNotif({userID: newReply.replyToUserID, notif:{msg:`There is new reply on your comment in the content ${result.name}`, href:'/content/id/'+result._id}})
+            if(emailNotif)
+                await sendEmail(email, {
+                    title: "New Reply In Your Comment",
+                    content:`
+                    <h5>There is new reply in your comment in the content ${result.name} <a href="${process.env.REACT_APP_URL}/content/id/${result._id}">click here</a> to go to the content</h5>
+                    <p style="white-space: pre-wrap;"><bold>The reply:</bold>\n "${newReply.body}"</p>
+                    `
+                })
         }
     }).catch(err=> next(err))
 }
@@ -101,12 +109,20 @@ const replyComment = (req, res, next)=>{
 const getReplies = (req, res, next)=>{
     if(!validateId(req.params.contentID) && !validateId(req.params.commentID))
         return res.status(400).json({msg:"Bad Request! Try Again."})
-    getRepliesByCommentID(req.params).then( separetedRepliesComment=>{
+    getRepliesByCommentID(req.params).then(async separetedRepliesComment=>{// param: array of objects, each obj is comment contain one reply obj
         let replies = [];
         separetedRepliesComment.forEach(ele => {
             replies.push(ele.comments.replies)
         });
-        res.status(200).json(replies)
+        await getUsersImgs(replies).then(usersImgs=>{
+            replies.forEach(reply=>{
+                if(reply.userID)
+                    reply.userImg =  usersImgs[reply.userID]
+            })
+            res.status(200).json(replies)
+        }).catch(err=>{ 
+            next(err)
+        })
     }).catch( err=> next(err))
 }
 
