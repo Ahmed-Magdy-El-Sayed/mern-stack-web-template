@@ -396,7 +396,7 @@ module.exports ={
     getfirst50Accounts: async ()=>{
         try {
             return await dbConnect(async ()=>
-                await usersModel.find({},
+                await usersModel.find({"username": {$nin: ["Admin0", 'User0']}},
                     {password: 0, notifs: 0, notifsNotReaded: 0, favoriteList:0}, 
                     {sort:{username:1}, limit:50}
                 ).lean().then(accounts=>
@@ -424,6 +424,7 @@ module.exports ={
                     {"authz.isAdmin": true}
                 :{};
                 
+                query.username= {$nin: ["Admin0", 'User0']}
                 if(data.searchVal)
                     query[data.searchBy] = { "$regex": `.*${data.searchVal}.*`, "$options": "i" }
 
@@ -456,7 +457,8 @@ module.exports ={
                     {"authz.isAdmin": true}
                 :{};
                 query[search.by]= { "$regex": `.*${search.val}.*`, "$options": "i" };
-
+                
+                query.username= {$nin: ["Admin0", 'User0']}
                 return await usersModel.find(query, 
                     {password: 0, notifs: 0, notifsNotReaded: 0, favoriteList:0},
                     {sort:{username:1}, limit:10}
