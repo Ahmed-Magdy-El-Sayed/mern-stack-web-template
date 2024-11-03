@@ -9,7 +9,7 @@ const uSchema = new mongoose.Schema({
     username: {type: String, trim: true},
     email: String,
     img:{type: String, default: "default.png"},
-    registrationDate: {type: String, default: Date.now()},
+    registrationDate: {type: Number, default: Date.now()},
     birthdate: String,
     address: String,
     password: String,
