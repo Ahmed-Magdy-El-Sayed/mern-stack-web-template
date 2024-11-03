@@ -54,7 +54,7 @@ export default function ContentSearch({onClickFun}){
                         }}>
                             <div className="dropdown-item d-flex justify-content-between align-items-center">
                                 <div className='details'>
-                                    <h6>{content.name}</h6>
+                                    <h6 className="text-break">{content.name}</h6>
                                     <p>By {content.author.username}</p>
                                 </div>
                                 <img src={contentImagesPath(content.img)}  alt='content cover' onError={defaultContentImg}/>

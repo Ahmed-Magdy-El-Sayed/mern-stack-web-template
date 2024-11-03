@@ -4,15 +4,17 @@ import { CommentContext } from "../content";
 import { useDispatch } from 'react-redux';
 import { addAlert } from "../../../../redux/alertSlice";
 import ReplyOptions from "./replyOptions";
-import { accountImagesPath, calcPassedTime, defaultUserImg } from "../../../../utils";
+import { accountImagesPath, calcPassedTime, defaultUserImg, profileRoute } from "../../../../utils";
+import { useNavigate } from "react-router-dom";
 
 function Reply({commentIndex, replyToID}){
-    const {content, comments, updateComments, user} = useContext(CommentContext)
-    const commentID = comments[commentIndex]._id
-    const allReplies = comments[commentIndex].replies
-    const [replies, setReplies] = useState(allReplies[replyToID])
-    const [viewReplies, setViewReplies] = useState(new Array(allReplies[replyToID].length))
-    const dispatch = useDispatch()
+    const {content, comments, updateComments, user} = useContext(CommentContext);
+    const commentID = comments[commentIndex]._id;
+    const allReplies = comments[commentIndex].replies;
+    const [replies, setReplies] = useState(allReplies[replyToID]);
+    const [viewReplies, setViewReplies] = useState(new Array(allReplies[replyToID].length));
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     if(JSON.stringify(allReplies[replyToID]) && allReplies[replyToID]?.length && JSON.stringify(allReplies[replyToID]) !== JSON.stringify(replies))
         setReplies(allReplies[replyToID])
@@ -94,7 +96,7 @@ function Reply({commentIndex, replyToID}){
             <div className="reply pt-3" id={"id"+reply._id}>
                 {/* Reply Owner Details */}
                 <div className="user-details d-flex gap-2 align-items-center">
-                    <img className="img-icon rounded-pill" alt="" src={accountImagesPath(reply.userImg)} onError={defaultUserImg}/>
+                    <img className="img-icon rounded-pill cur-ponter" alt="" src={accountImagesPath(reply.userImg)} onClick={() => navigate(profileRoute+reply.userID)}  onError={defaultUserImg}/>
                     <div className="details">
                         {
                             reply.userIsAuthz?

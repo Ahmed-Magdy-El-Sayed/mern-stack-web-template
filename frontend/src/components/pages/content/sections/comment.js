@@ -6,12 +6,14 @@ import { useDispatch } from 'react-redux';
 import CommentOptions from './commentOptions';
 import Reply from "./reply"
 import { addAlert } from '../../../../redux/alertSlice';
-import { accountImagesPath, calcPassedTime, defaultUserImg, URLSearchParamsData } from '../../../../utils';
+import { accountImagesPath, calcPassedTime, defaultUserImg, profileRoute, URLSearchParamsData } from '../../../../utils';
+import { useNavigate } from 'react-router-dom';
 
 function Comment() {
     const {content, comments, updateComments, user} = useContext(CommentContext);
     const spinnerRef = useRef();
     const [viewReplies, setViewReplies] = useState(new Array(comments.length))
+    const navigate = useNavigate();
     const dispatch = useDispatch();
 
     //addCommentTime in content.js file
@@ -110,7 +112,7 @@ function Comment() {
                             <div className="comment col-md-10 pt-3" data-index={i} key={comment._id} id={`id${comment._id}`}>
                                 {/* Comment Owner Details */}
                                 <div className="user-details d-flex gap-2 align-items-center">
-                                    <img className="img-icon rounded-circle" alt='' src={accountImagesPath(comment.userImg)} onError={defaultUserImg}/>
+                                    <img className="img-icon rounded-circle cur-pointer" alt='' src={accountImagesPath(comment.userImg)} onClick={() => navigate(profileRoute+comment.userID)} onError={defaultUserImg}/>
                                     <div className="details">
                                         {comment.userIsAuthz ? 
                                             <span className="username budge bg-primary text-white p-1 ps-2 pe-2 rounded">

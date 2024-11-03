@@ -64,7 +64,7 @@ router.delete("/warning", isLoggedIn, deleteWarning)
 
 router.delete("/delete", isLoggedIn, (req, res, next)=>{
     const usersArr = ['66db3bc377c6ad39f86a330d', '66fd9be2c3497fc2d0797831', '66fd9c07c3497fc2d0797835', '66fd9c2fc3497fc2d0797839']
-    if(usersArr.includes(String((req.body.userID && user.authz.isAdmin)? req.body.userID : req.session.user._id)))
+    if(usersArr.includes(String((req.body.userID && req.session.user.authz.isAdmin)? req.body.userID : req.session.user._id)))
         return res.status(403).json({msg: 'Forbedden for this demo account. Create another account to apply this change on'})
     next()
 }, deleteAccount)

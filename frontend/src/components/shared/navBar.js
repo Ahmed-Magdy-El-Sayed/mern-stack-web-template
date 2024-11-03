@@ -82,7 +82,7 @@ export default function NavBar({mode}) {
             credentials: 'include'
         }).then(async res=>{
             if(res.ok)
-                window.location.href = "/"; 
+                window.location.href = "/account/login"; 
             else
                 throw await res.json()
         }).catch(err=>{

@@ -5,14 +5,6 @@ import { addAlert } from '../../../redux/alertSlice';
 import { useLoaderData } from 'react-router-dom';
 import Loader from '../../shared/loader';
 
-const showGetMore = {user:true,author:true, editor:true, admin:true, all: true};
-
-let searchLatency;
-let accountsTemp;
-let searchIsMepty = true;
-let searchVal;
-let searchBy = "username";
-
 const transitionStyle = {transition: '0.7s'};
 
 export default function AccountsControl() {
@@ -20,11 +12,18 @@ export default function AccountsControl() {
     const loaderAccounts = useLoaderData();
     const [accounts, setAccounts] = useState(loaderAccounts);
     const [sectionsDisplay, setSectionsDisplay] = useState('all');
+    const showGetMore = {user:true,author:true, editor:true, admin:true, all: true};
     const dispatch = useDispatch();
     const updateAccounts = cb=>{
         setAccounts(cb)
     }
     
+    let searchLatency;
+    let accountsTemp;
+    let searchIsMepty = true;
+    let searchVal;
+    let searchBy = "username";
+
     let getAccountsClicked = false
     const getMoreAccounts = (accountType, skip)=>{
         if(getAccountsClicked) return null
@@ -104,7 +103,7 @@ export default function AccountsControl() {
     const getMoreOption = (type, skip)=>
         <div className="get-accounts text-primary mt-3 text-center fs-5">
             <span className="text-decoration-none cur-pointer" onClick={() => getMoreAccounts(type, skip)}>
-                Get Accounts
+                more accounts
             </span>
         </div>
 
@@ -131,7 +130,7 @@ export default function AccountsControl() {
                 {
                 accounts?(
                     ()=>{
-                        const filteredAccounts =  accounts.filter(account=>(sectionsDisplay === 'all' || account.role === sectionsDisplay))
+                        const filteredAccounts =  sectionsDisplay === 'all'? accounts : accounts.filter(account=>(account.role === sectionsDisplay))
                         return <>{
                             filteredAccounts.length ?
                                 <div className="accounts d-flex flex-wrap justify-content-center gap-2">
@@ -146,7 +145,7 @@ export default function AccountsControl() {
                                 searchVal? 
                                     filteredAccounts.length? getMoreOption(sectionsDisplay, filteredAccounts.length) : ""
                                 :   getMoreOption(sectionsDisplay, filteredAccounts.length)
-                            : ""}
+                            : <p className='text-center text-secondary mt-3 mb-0 pb-3'>No more accounts</p>}
                         </>
                     }
                 )(): <Loader/>

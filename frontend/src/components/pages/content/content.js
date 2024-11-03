@@ -512,7 +512,7 @@ export default function Content() {
                     <div className="author-details d-flex gap-2">
                         <p className="m-0">By:</p>
                         <div className="text-center">
-                            <img className="m-auto img-icon rounded-circle .cur-pointer" src={accountImagesPath(content.author.img)} alt="" onClick={() => navigate(profileRoute+content.author.id)} onError={defaultUserImg}/>
+                            <img className="m-auto img-icon rounded-circle cur-pointer" src={accountImagesPath(content.author.img)} alt="" onClick={() => navigate(profileRoute+content.author.id)} onError={defaultUserImg}/>
                             <p>{content.author.username}</p>
                         </div>
                     </div>
@@ -621,7 +621,7 @@ export default function Content() {
                                 </div>
                             </>
                         }
-                        {user && String(user._id) !== content.author.id &&
+                        {user && String(user._id) !== content.author.id && !content.isUnderReview &&
                             <FontAwesomeIcon icon={`fa-${isFavorite? 'solid' : 'regular'} fa-star`} className={`fs-4 ${mode === "light" && 'text-primary'}`} onClick={toggleFavoriteContent}/>
                         }
                     </div>

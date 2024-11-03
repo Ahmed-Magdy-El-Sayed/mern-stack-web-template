@@ -396,9 +396,9 @@ module.exports ={
     getfirst50Accounts: async ()=>{
         try {
             return await dbConnect(async ()=>
-                await usersModel.find({"username": {$nin: ["Admin0", 'User0']}},
+                await usersModel.find({"username": {$nin: ["Admin0", "User0"]}},
                     {password: 0, notifs: 0, notifsNotReaded: 0, favoriteList:0}, 
-                    {sort:{username:1}, limit:50}
+                    {sort:{username:1}, limit:10}
                 ).lean().then(accounts=>
                     accounts.map(acc=>{
                         acc.role= acc.authz.isAdmin? "admin" : acc.authz.isEditor? "editor" : acc.authz.isAuthor? "author" : "user"
@@ -412,22 +412,22 @@ module.exports ={
         }
     },
     getNextAccounts: async data=>{
+        const query = data.accountType === 'user'?
+            {$nor:[{"authz.isAdmin": true}, {"authz.isEditor": true}, {"authz.isAuthor": true}]}
+        :data.accountType === 'author'?
+            {"authz.isAuthor": true}
+        :data.accountType === 'editor'?
+            {"authz.isEditor": true}
+        :data.accountType === 'admin'?
+            {"authz.isAdmin": true}
+        :{};
+        query.username= {$nin: ["Admin0", "User0"]}
+        
+        if(data.searchVal)
+            query[data.searchBy] = { "$regex": `.*${data.searchVal}.*`, "$options": "i" }
+        
         try {
             return await dbConnect(async ()=>{
-                const query = data.accountType === 'user'?
-                    {$nor:[{"authz.isAdmin": true}, {"authz.isEditor": true}, {"authz.isAuthor": true}]}
-                :data.accountType === 'author'?
-                    {"authz.isAuthor": true}
-                :data.accountType === 'editor'?
-                    {"authz.isEditor": true}
-                :data.accountType === 'admin'?
-                    {"authz.isAdmin": true}
-                :{};
-                
-                query.username= {$nin: ["Admin0", 'User0']}
-                if(data.searchVal)
-                    query[data.searchBy] = { "$regex": `.*${data.searchVal}.*`, "$options": "i" }
-
                 return await usersModel.find(
                     query, 
                     {password: 0, notifs: 0, notifsNotReaded: 0, favoriteList:0}, 
@@ -445,20 +445,26 @@ module.exports ={
         }
     },
     searchAccounts: async search=>{
+        const query = search.accountType == 'user'?
+            {$nor:[{"authz.isAdmin": true}, {"authz.isEditor": true}, {"authz.isAuthor": true}]}
+        :search.accountType == 'author'?
+            {"authz.isAuthor": true}
+        :search.accountType == 'editor'?
+            {"authz.isEditor": true}
+        :search.accountType == 'admin'?
+            {"authz.isAdmin": true}
+        :{};
+
+        query[search.by]= { "$regex": `.*${search.val}.*`, "$options": "i" };
+
+        if(search.by == "username")
+            query.username.$nin= ["Admin0", "User0"]
+        else
+            query.username= {$nin: ["Admin0", "User0"]}
+
         try {
             return await dbConnect(async ()=>{
-                const query = search.accountType == 'user'?
-                    {$nor:[{"authz.isAdmin": true}, {"authz.isEditor": true}, {"authz.isAuthor": true}]}
-                :search.accountType == 'author'?
-                    {"authz.isAuthor": true}
-                :search.accountType == 'editor'?
-                    {"authz.isEditor": true}
-                :search.accountType == 'admin'?
-                    {"authz.isAdmin": true}
-                :{};
-                query[search.by]= { "$regex": `.*${search.val}.*`, "$options": "i" };
                 
-                query.username= {$nin: ["Admin0", 'User0']}
                 return await usersModel.find(query, 
                     {password: 0, notifs: 0, notifsNotReaded: 0, favoriteList:0},
                     {sort:{username:1}, limit:10}

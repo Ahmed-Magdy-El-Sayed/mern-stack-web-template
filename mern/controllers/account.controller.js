@@ -129,10 +129,6 @@ const getProfile = async (req, res, next)=>{//get profile page data
         if(!profileOwner)
             return res.status(404).json({msg:"Not Found!"})
 
-        if(!isAdminReq && !Object.values(profileOwner.authz).includes(true))
-            return res.status(404).json({msg:"Not Found!"})
-        //the clients accounts' profiles are (by default) private -to make them public, remove the above condition 
-
         profileOwner.role = profileOwner.authz.isAdmin? "admin" : profileOwner.authz.isEditor? "editor" : profileOwner.authz.isAuthor? "author" : "user"
         delete profileOwner.authz
         res.status(200).json({profileOwner, isAdminReq})

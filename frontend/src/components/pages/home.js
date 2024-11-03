@@ -89,14 +89,14 @@ export default function Home(){
                         </ContentCard>
                     )}
                 </div>
-                {moreContent &&
+                {moreContent?
                     <div className="show-contents text-primary text-center m-auto fs-4 mt-3 pb-3">
                         <span className="text-decoration-none cur-pointer" href='' onClick={getMoreContents}>
                             show more
                         </span>
                     </div>
-                }
-                </>
+                :   <p className='text-secondary text-center mt-3 mb-0 pb-3'>No more contents</p>
+                }</>
             :
                 <h3 className="w-100 text-center">No Content Exist</h3>
             }
