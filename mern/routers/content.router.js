@@ -22,6 +22,8 @@ router.post('/more', getMoreContents)
 router.get('/favorite/account/:id', isLoggedIn, getFavoriteContents)
 router.put('/favorite/toggle', isLoggedIn, toggleFavorite)
 router.post('/add', isLoggedIn, isAuthor, (req, res, next)=>{ 
+    if(String(req.session.user._id) != '670027ec24a2f729b806c7df')
+        return next()
     upload.single('img')(req, res, err=>{ 
         if(err){console.log(err); return res.status(401).json({msg: "Internal Server Error"})} 
         next()
@@ -31,27 +33,32 @@ router.post('/add', isLoggedIn, isAuthor, (req, res, next)=>{
 // content
 router.get('/id/:id', getContent)
 router.put('/hide', isLoggedIn, isAuthor, (req, res, next)=>{ 
+    if(String(req.session.user._id) == '670027ec24a2f729b806c7df')
+        return next()
     if(['66db515dccfccd7677107197', '66db51d9ccfccd76771071a5', '670149744226ccf5903c434d', '6701497a4226ccf5903c4357', '670149814226ccf5903c4364'].includes(String(req.body.contentID)))
-        return res.status(403).json({msg: 'Forbedden for this demo account. Create your own account to apply this change on'})
+        return res.status(403).json({msg: 'Forbedden for this demo content. Create another content to apply this change on'})
     next()
 }, hideContent)
 router.put('/show', isLoggedIn, isAuthor, (req, res, next)=>{ 
+    if(String(req.session.user._id) == '670027ec24a2f729b806c7df')
+        return next()
     if(['66db515dccfccd7677107197', '66db51d9ccfccd76771071a5', '670149744226ccf5903c434d', '6701497a4226ccf5903c4357', '670149814226ccf5903c4364'].includes(String(req.body.contentID)))
-        return res.status(403).json({msg: 'Forbedden for this demo account. Create your own account to apply this change on'})
+        return res.status(403).json({msg: 'Forbedden for this demo content. Create another content to apply this change on'})
     next()
 }, showContent)
 router.put('/edit', isLoggedIn, isAuthor, (req, res, next)=>{ 
-    if(['66db515dccfccd7677107197', '66db51d9ccfccd76771071a5', '670149744226ccf5903c434d', '6701497a4226ccf5903c4357', '670149814226ccf5903c4364'].includes(String(req.body.contentID)))
-        return res.status(403).json({msg: 'Forbedden for this demo account. Create your own account to apply this change on'})
-    
+    if(String(req.session.user._id) != '670027ec24a2f729b806c7df')
+        return next()
     upload.single('img')(req, res, err=>{ 
         if(err){console.log(err); return res.status(401).json({msg: "Internal Server Error"})} 
         next()
     })
 }, editContent)
 router.delete('/delete', isLoggedIn, isAuthor, (req, res, next)=>{ 
+    if(String(req.session.user._id) == '670027ec24a2f729b806c7df')
+        return next()
     if(['66db515dccfccd7677107197', '66db51d9ccfccd76771071a5', '670149744226ccf5903c434d', '6701497a4226ccf5903c4357', '670149814226ccf5903c4364'].includes(String(req.body.contentID)))
-        return res.status(403).json({msg: 'Forbedden for this demo account. Create your own account to apply this change on'})
+        return res.status(403).json({msg: 'Forbedden for this demo content. Create another content to apply this change on'})
     next()
 }, deleteContent)
 
@@ -62,11 +69,12 @@ router.put('/unselect', isLoggedIn, isReviewer, unselectContent)
 router.put('/approve', isLoggedIn, isReviewer, approveContent)
 router.delete('/reject', isLoggedIn, isReviewer, rejectContent)
 router.put('/slider/update', isLoggedIn, isReviewer, (req, res, next)=>{ 
-    return res.status(403).json({msg: "Change slider not allowed in the demo"})
-    /* upload.array('img')(req, res, err=>{ 
+    if(String(req.session.user._id) != '670027ec24a2f729b806c7df')
+        return  res.status(403).json({msg: 'Forbedden for this demo version.'})
+    upload.array('img')(req, res, err=>{ 
         if(err){console.log(err); return res.status(401).json({msg: "Internal Server Error"})} 
         next()
-    }) */
+    })
 }, updateSlider)
 
 router.use('',require('./comment.router'))
