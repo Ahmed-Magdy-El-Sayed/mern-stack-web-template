@@ -253,7 +253,7 @@ const toggleUserEmailNotif = (req, res, next)=>{
 
 /* start the functions of accountControl page */
 const getAccounts = (req, res, next)=>{
-    userModel.getfirst50Accounts().then(accounts=>{
+    userModel.getfirst10Accounts().then(accounts=>{
         res.status(200).json(accounts)
     }).catch(err=> next(err))
 }

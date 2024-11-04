@@ -7,7 +7,7 @@ import ReplyOptions from "./replyOptions";
 import { accountImagesPath, calcPassedTime, defaultUserImg, profileRoute } from "../../../../utils";
 import { useNavigate } from "react-router-dom";
 
-function Reply({commentIndex, replyToID}){
+function Reply({commentIndex, replyToID, commentIsDeleted}){
     const {content, comments, updateComments, user} = useContext(CommentContext);
     const commentID = comments[commentIndex]._id;
     const allReplies = comments[commentIndex].replies;
@@ -96,7 +96,7 @@ function Reply({commentIndex, replyToID}){
             <div className="reply pt-3" id={"id"+reply._id}>
                 {/* Reply Owner Details */}
                 <div className="user-details d-flex gap-2 align-items-center">
-                    <img className="img-icon rounded-pill cur-ponter" alt="" src={accountImagesPath(reply.userImg)} onClick={() => navigate(profileRoute+reply.userID)}  onError={defaultUserImg}/>
+                    <img className={`img-icon rounded-pill ${reply.userID && 'cur-pointer'}`} alt="" src={accountImagesPath(reply.userImg)} onClick={() => reply.userID && navigate(profileRoute+reply.userID)}  onError={defaultUserImg}/>
                     <div className="details">
                         {
                             reply.userIsAuthz?
@@ -110,7 +110,7 @@ function Reply({commentIndex, replyToID}){
                             :<h6 className="username d-inline m-0"> {user? String(user._id)===reply.userID?"Me":reply.username:reply.username} </h6>
                         }
                         <FontAwesomeIcon icon="fa-solid fa-angles-right"/>
-                        <a className="text-decoration-none" href={"#id"+reply.replyToID} onClick={()=>getRepliedTo("#id"+reply.replyToID)}> {user? String(user._id)===reply.replyToUserID?"Me":reply.replyToUserName : reply.replyToUserName}</a>
+                        <a className="text-decoration-none" href={"#id"+reply.replyToID} onClick={()=>getRepliedTo("#id"+reply.replyToID)}> {commentIsDeleted? "Deleted" : (user? (String(user._id)===reply.replyToUserID?"Me":reply.replyToUserName) : reply.replyToUserName)}</a>
                         <p className="comment-time m-0">{reply.time? reply.time : calcPassedTime(parseInt(reply.timestamp)).passedTime}</p>
                     </div>
                 </div>
@@ -129,7 +129,7 @@ function Reply({commentIndex, replyToID}){
                 <div className="comment-replies">
                     <div className={`collapse replies ${commentID === replyToID?"ps-5":"ps-2"} border-start border-2 border-secondary`} id={"replies"+reply._id}>
                         {allReplies[reply._id]?
-                            <Reply commentIndex={commentIndex} replyToID={reply._id}/>
+                            <Reply commentIndex={commentIndex} replyToID={reply._id} commentIsDeleted={reply.userID?false:true}/>
                         :
                         <div className="spinner-border text-primary ms-3" role="status">
                             <span className="visually-hidden">Loading...</span>

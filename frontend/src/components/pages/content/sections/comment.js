@@ -112,7 +112,7 @@ function Comment() {
                             <div className="comment col-md-10 pt-3" data-index={i} key={comment._id} id={`id${comment._id}`}>
                                 {/* Comment Owner Details */}
                                 <div className="user-details d-flex gap-2 align-items-center">
-                                    <img className="img-icon rounded-circle cur-pointer" alt='' src={accountImagesPath(comment.userImg)} onClick={() => navigate(profileRoute+comment.userID)} onError={defaultUserImg}/>
+                                    <img className={`img-icon rounded-circle ${comment.userID && 'cur-pointer'}`} alt='' src={accountImagesPath(comment.userImg)} onClick={() => comment.userID && navigate(profileRoute+comment.userID)} onError={defaultUserImg}/>
                                     <div className="details">
                                         {comment.userIsAuthz ? 
                                             <span className="username budge bg-primary text-white p-1 ps-2 pe-2 rounded">
@@ -144,7 +144,7 @@ function Comment() {
                                     <div className="comment-replies col-md-10">
                                         <div className="collapse replies ps-5 border-start border-2 border-primary" id={`replies${comment._id}`}>
                                             {comment.replies? <>
-                                                <Reply commentIndex={i} replyToID={comment._id}/>
+                                                <Reply commentIndex={i} replyToID={comment._id} commentIsDeleted= {comment.userID?false:true}/>
                                             </>
                                             :
                                                 <div className="spinner-border text-primary ms-3" role="status">

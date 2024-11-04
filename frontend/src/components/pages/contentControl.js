@@ -305,8 +305,8 @@ export default function ContentControl(){
                             </div>
                             <h5 className='col-3'>{content.title}</h5>
                             <span className='slide-count col-3'>
-                                <label htmlFor='slideCount'>slide number:</label>
-                                <input id='slideCount' type='number' defaultValue={i+1} min={1} max={sliderContents.length} style={{width: "35px"}} onInput={e=>{ChangeSlideNum(i, Number(e.currentTarget.value)-1)}}/>
+                                <label htmlFor={'slideCount'+i}>slide number:</label>
+                                <input id={'slideCount'+i} type='number' defaultValue={i+1} min={1} max={sliderContents.length} style={{width: "35px"}} onInput={e=>{ChangeSlideNum(i, Number(e.currentTarget.value)-1)}}/>
                             </span>
                             <div className='col-1'>
                                 <button className='btn btn-outline-danger' onClick={()=>{deleteSlide(i)}}>

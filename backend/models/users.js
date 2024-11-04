@@ -393,12 +393,12 @@ module.exports ={
     /* end the function for profile page */
     
     /* start the function for accountsControl page */
-    getfirst50Accounts: async ()=>{
+    getfirst10Accounts: async ()=>{
         try {
             return await dbConnect(async ()=>
                 await usersModel.find({},
                     {password: 0, notifs: 0, notifsNotReaded: 0, favoriteList:0}, 
-                    {sort:{username:1}, limit:50}
+                    {sort:{username:1}, limit:10}
                 ).lean().then(accounts=>
                     accounts.map(acc=>{
                         acc.role= acc.authz.isAdmin? "admin" : acc.authz.isEditor? "editor" : acc.authz.isAuthor? "author" : "user"

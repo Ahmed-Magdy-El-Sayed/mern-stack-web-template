@@ -47,8 +47,11 @@ router.put('/show', isLoggedIn, isAuthor, (req, res, next)=>{
     next()
 }, showContent)
 router.put('/edit', isLoggedIn, isAuthor, (req, res, next)=>{ 
-    if(String(req.session.user._id) != '670027ec24a2f729b806c7df')
+    if(String(req.session.user._id) != '670027ec24a2f729b806c7df'){
+        if(['66db515dccfccd7677107197', '66db51d9ccfccd76771071a5', '670149744226ccf5903c434d', '6701497a4226ccf5903c4357', '670149814226ccf5903c4364'].includes(String(req.body.contentID)))
+            return res.status(403).json({msg: 'Forbedden for this demo content. Create another content to apply this change on'})
         return next()
+    }
     upload.single('img')(req, res, err=>{ 
         if(err){console.log(err); return res.status(401).json({msg: "Internal Server Error"})} 
         next()

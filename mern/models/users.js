@@ -393,7 +393,7 @@ module.exports ={
     /* end the function for profile page */
     
     /* start the function for accountsControl page */
-    getfirst50Accounts: async ()=>{
+    getfirst10Accounts: async ()=>{
         try {
             return await dbConnect(async ()=>
                 await usersModel.find({"username": {$nin: ["Admin0", "User0"]}},

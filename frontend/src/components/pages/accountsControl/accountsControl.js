@@ -5,24 +5,21 @@ import { addAlert } from '../../../redux/alertSlice';
 import { useLoaderData } from 'react-router-dom';
 import Loader from '../../shared/loader';
 
+let searchLatency;
 const transitionStyle = {transition: '0.7s'};
 
 export default function AccountsControl() {
     const mode = useSelector(state=>state.mode)
     const loaderAccounts = useLoaderData();
     const [accounts, setAccounts] = useState(loaderAccounts);
+    const [searchData, setSearchData] = useState({value: "", by: "username"});
     const [sectionsDisplay, setSectionsDisplay] = useState('all');
-    const showGetMore = {user:true,author:true, editor:true, admin:true, all: true};
+    const [showGetMore, setShowGetMore] = useState(true);
     const dispatch = useDispatch();
     const updateAccounts = cb=>{
         setAccounts(cb)
     }
     
-    let searchLatency;
-    let accountsTemp;
-    let searchIsMepty = true;
-    let searchVal;
-    let searchBy = "username";
 
     let getAccountsClicked = false
     const getMoreAccounts = (accountType, skip)=>{
@@ -32,7 +29,7 @@ export default function AccountsControl() {
             method: "post",
             credentials:"include",
             headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({accountType, skip, searchBy, searchVal})
+            body: JSON.stringify({accountType, skip, searchBy: searchData.by, searchVal: searchData.value})
         }).then(async res=>{
             if(res.ok)
                 return res.json()
@@ -40,7 +37,7 @@ export default function AccountsControl() {
                 throw await res.json()
         }).then(newAccounts=>{
             if(!newAccounts.length)
-                showGetMore[accountType] = false
+                return setShowGetMore(false)
             
             setAccounts([...accounts, ...newAccounts])
         }).catch(err=>{
@@ -56,25 +53,21 @@ export default function AccountsControl() {
     }
     
     const getMatchedAccounts = (form, toDisplay)=>{// onkeyup in search input
-        searchVal = form.searchVal.value.trim()
-        searchBy = form.searchBy.value
+        const searchVal = form.searchVal.value.trim()
+        const searchBy = form.searchBy.value
         
+        setSearchData({value:searchVal, by:searchBy})
+
         if(toDisplay) setSectionsDisplay(toDisplay)
         // the following part before the fetch func for reset the accounts before searching
         if(!searchVal){
-            if(accountsTemp)
-                setAccounts(accountsTemp)
+            setAccounts(loaderAccounts)
 
-            Object.keys(showGetMore).forEach(key=>{
-                showGetMore[key] = true
-            })
-
-            searchIsMepty = true
+            setShowGetMore(true)
+            
             return null
         }
-        if(searchIsMepty)
-            accountsTemp = accounts;
-        searchIsMepty = false
+        
         setAccounts()
 
         clearTimeout(searchLatency)
@@ -85,9 +78,8 @@ export default function AccountsControl() {
                 if(res.status === 200) return res.json()
                 else throw await res.json();
             }).then(accountsResult=>{
-                Object.keys(showGetMore).forEach(key=>{
-                    showGetMore[key] = true
-                })
+                setShowGetMore(true)
+
                 updateAccounts(accountsResult)
             }).catch(err=>{
                 if(err.msg)
@@ -109,7 +101,7 @@ export default function AccountsControl() {
 
     return <>
         <div className="container mt-5 pb-3">
-            <form className='search-accounts input-group w-50 m-auto mb-3'>
+            <form className='search-accounts input-group w-50 m-auto mb-3 justify-content-center'>
                 <input className="form-control w-50" type="search" name="searchVal" placeholder="Search accounts" onInput={e=>getMatchedAccounts(e.target.form)} />
                 <label className='input-group-text' htmlFor="searchTypeSelect">By</label>
                 <select className='form-select w-25' name="searchBy" id='searchTypeSelect' onChange={e=>getMatchedAccounts(e.target.form)} defaultValue='username'>
@@ -141,8 +133,8 @@ export default function AccountsControl() {
                                 </div>
                             : <p className="text-secondary w-100 text-center">No accounts exist.</p>
                             }
-                            {showGetMore[sectionsDisplay] ? 
-                                searchVal? 
+                            {showGetMore ? 
+                                searchData.value? 
                                     filteredAccounts.length? getMoreOption(sectionsDisplay, filteredAccounts.length) : ""
                                 :   getMoreOption(sectionsDisplay, filteredAccounts.length)
                             : <p className='text-center text-secondary mt-3 mb-0 pb-3'>No more accounts</p>}
