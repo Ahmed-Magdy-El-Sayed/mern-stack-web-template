@@ -5,6 +5,28 @@ const { saveOauthUser } = require("./models/users");
 
 dotenv.config()
 
+/*
+    OAuth Integration Guide
+
+    This template includes Google OAuth integration using Passport.js.
+    To add another third-party OAuth provider, follow these steps:
+
+    1. Install the necessary Passport strategy for the desired provider.
+        For example, to add GitHub OAuth, run:
+        npm install passport-github
+
+    2. Require the strategy in your application: as the google strategy in the passport.js file
+
+    3. Configure the strategy with your client ID, client secret, and callback URL: as the google strategy in the passport.js file
+
+    4. Set up the authentication routes: as the two google routes below.
+
+    6. add the link to the client login and signup pages
+
+    For more information on integrating other OAuth providers, refer to the
+    Passport.js documentation: https://www.passportjs.org/packages/
+ */
+
 passport.use(
     new GoogleStrategy(
         {
