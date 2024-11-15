@@ -1,8 +1,13 @@
 
 const contentRoute = '/content/id/'
 const profileRoute = '/account/profile/'
+<<<<<<< HEAD
 const accountImagesPath = imgPath=> imgPath.includes("/")? imgPath : (process.env.REACT_APP_API_SERVER+"/images/account/"+imgPath)
 const contentImagesPath = imgPath=> imgPath.includes("/")? imgPath : (process.env.REACT_APP_API_SERVER+"/images/content/"+imgPath)
+=======
+const accountImagesPath = imgPath=> imgPath?.includes("/")? imgPath : (process.env.REACT_APP_API_SERVER+"/images/account/"+imgPath)
+const contentImagesPath = imgPath=> imgPath?.includes("/")? imgPath : (process.env.REACT_APP_API_SERVER+"/images/content/"+imgPath)
+>>>>>>> c477089 (update)
 
 
 const calcPassedTime = timestamp=>{// calc the time that passed from post the comment

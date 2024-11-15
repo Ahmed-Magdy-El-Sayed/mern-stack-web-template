@@ -176,7 +176,11 @@ export default function NavBar({mode}) {
                                             }
                                         </li>
                                     )}
+<<<<<<< HEAD
                                     <span className="text-primary text-decoration-none" onClick={clearNotif}> Clear Notifications </span>
+=======
+                                    <span className="text-primary text-decoration-none cur-pointer" onClick={clearNotif}> Clear Notifications </span>
+>>>>>>> c477089 (update)
                                 </>
                                 :<p>No notifications</p>
                                 }

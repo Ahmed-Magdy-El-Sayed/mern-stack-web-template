@@ -197,7 +197,11 @@ export default function CommentOptions ({comment, index, updateComments}){
         String(user._id) === String(comment.userID));
     return <>
     {viewEdit && comment.editMode && <div className="edit-commentmb-3">
+<<<<<<< HEAD
         <textarea className="form-control my-3" name="body" placeholder="Enter comment" rows="2" defaultValue={comment.body} required></textarea>
+=======
+        <textarea className="form-control my-3" name="body" placeholder="Enter comment" onInput={e=>{e.target.style.height = "";e.target.style.height = e.target.scrollHeight + "px"}} defaultValue={comment.body} required></textarea>
+>>>>>>> c477089 (update)
         <button
             className="btn btn-sm btn-primary me-3"
             onClick={saveCommentEdit}

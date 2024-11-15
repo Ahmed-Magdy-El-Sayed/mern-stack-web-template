@@ -197,7 +197,11 @@ export default function ReplyOptions ({commentIndex, replyToID, reply, index, up
     return <>
     {viewEdit && reply.editMode &&
         <div className="edit-comment mb-3">
+<<<<<<< HEAD
             <textarea className='form-control mt-3 mb-3' name='body' placeholder='Enter comment' rows='2' defaultValue={reply.body} required/>
+=======
+            <textarea className='form-control mt-3 mb-3' name='body' placeholder='Enter comment' onInput={e=>{e.target.style.height = "";e.target.style.height = e.target.scrollHeight + "px"}} defaultValue={reply.body} required/>
+>>>>>>> c477089 (update)
             <button className='btn btn-sm btn-primary me-3' onClick={saveReplyEdit}>
                 <span className="spinner-border spinner-border-sm me-2 d-none" ref={ref=> spinnerRef.current.edit = ref} aria-hidden="true"></span>
                 <span>Edit</span> 

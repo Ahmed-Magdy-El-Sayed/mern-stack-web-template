@@ -261,6 +261,10 @@ function AccountControlCard({account, updateAccounts, mode}) {
                 />
                 <h5>{String(user._id) === String(account._id) ? 'Me' : account.username}</h5>
                 <p>{account.email}</p>
+<<<<<<< HEAD
+=======
+                <p>Registered at {new Date(account.registrationDate).toLocaleString()}</p>
+>>>>>>> c477089 (update)
 
                 <form className="form-floating mb-3">
                     {/* Authorizations Control */}

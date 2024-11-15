@@ -608,6 +608,7 @@ export default function Content() {
                                         Delete
                                     </button>
                                 </div>
+<<<<<<< HEAD
                                 
                                 <div className="d-flex flex-row-reverse gap-2 align-items-center">
                                     <span>{
@@ -621,6 +622,22 @@ export default function Content() {
                                 </div>
                             </>
                         }
+=======
+                                <button className="btn btn-primary" type="button" data-bs-toggle='collapse' data-bs-target="#content-setting">Setting</button>
+                            </>
+                        }
+                        {!content.isUnderReview &&
+                            <div className="d-flex flex-row-reverse gap-2 align-items-center">
+                                <span>{
+                                    content.views?
+                                    content.views>=1000000? (content.views/1000000).toFixed(1)+"M":
+                                    content.views>=1000? (content.views/1000).toFixed(1)+"k" :
+                                    content.views : 0
+                                }</span>
+                                <FontAwesomeIcon icon="fa-regular fa-eye"/>
+                            </div>
+                        }
+>>>>>>> c477089 (update)
                         {user && String(user._id) !== content.author.id && !content.isUnderReview &&
                             <FontAwesomeIcon icon={`fa-${isFavorite? 'solid' : 'regular'} fa-star`} className={`fs-4 ${mode === "light" && 'text-primary'}`} onClick={toggleFavoriteContent}/>
                         }
