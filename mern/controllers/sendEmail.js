@@ -12,11 +12,7 @@ const transporter = nodemailer.createTransport({
 });
 
 module.exports={
-<<<<<<< HEAD
-    sendEmail: async function (email, notif) {console.log(email, notif)
-=======
     sendEmail: async function (email, notif) {
->>>>>>> c477089 (update)
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to: email,

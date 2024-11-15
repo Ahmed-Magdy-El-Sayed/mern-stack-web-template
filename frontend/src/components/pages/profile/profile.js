@@ -32,16 +32,10 @@ export default function Profile() {
                     <button className={`btn-close ${mode === 'dark'&& 'btn-close-white'}`} data-bs-dismiss="offcanvas" data-bs-target="#profileSidebar" aria-label="Close"></button>
                 </div>
                 <div className="offcanvas-body flex-column">
-<<<<<<< HEAD
-                    <img className="img-icon-lg m-auto rounded-circle" src={accountImagesPath(profileOwner? profileOwner.img : user.img)} alt="user cover" onError={defaultUserImg}/>
-                    <h3 className="m-0 mt-3">{profileOwner? profileOwner.username : user.username}</h3>
-                    { !profileOwner && <p className='text-break'> {user.email}</p> }
-=======
                     <img className="img-icon-lg m-auto rounded-circle" src={accountImagesPath((profileOwner? profileOwner : user).img)} alt="user cover" onError={defaultUserImg}/>
                     <h3 className="m-0 mt-3">{(profileOwner? profileOwner : user).username}</h3>
                     { !profileOwner && <p className='text-break'> {user.email}</p> }
                     <p>Registered at {new Date((profileOwner? profileOwner : user).registrationDate).toLocaleString()}</p>
->>>>>>> c477089 (update)
                     <div className="list-group mt-3">
                         <p 
                             className={`
