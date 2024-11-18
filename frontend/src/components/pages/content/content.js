@@ -633,7 +633,7 @@ export default function Content() {
                 <p>{calcPassedTime(content.timestamp).passedTime}</p>
 
                 {/* --------- here you should add the body of your content --------- */}
-                <div className="alert alert-info w-100">her you should add the body of your content</div>
+                <div className="alert alert-info w-100">here you should add the body of your content</div>
 
                 {content.isUnderReview?
                     content.reviewer === String(user?._id) &&

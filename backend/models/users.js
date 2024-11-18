@@ -295,12 +295,12 @@ module.exports ={
             return dbConnect(async()=>{
                 let error = false;
                 let setObj = {};
-                if(data.imageName || data.birthdate || data.address){
-                    if(data.imageName) setObj.img = data.imageName 
-                    if(data.firstName) setObj.firstName = data.firstName 
-                    if(data.lastName) setObj.lastName = data.lastName 
-                    if(data.birthdate) setObj.birthdate = data.birthdate 
-                    if(data.address) setObj.address = data.address 
+                if(data.imageName) setObj.img = data.imageName 
+                if(data.firstName) setObj.firstName = data.firstName 
+                if(data.lastName) setObj.lastName = data.lastName 
+                if(data.birthdate) setObj.birthdate = data.birthdate 
+                if(data.address) setObj.address = data.address 
+                if(Object.keys(setObj).length){
                     await usersModel.updateOne({_id:data.userID}, {$set:setObj}).catch(err=>{
                         console.log(err)
                         error= "Something Went Wrong, Try Again!"
