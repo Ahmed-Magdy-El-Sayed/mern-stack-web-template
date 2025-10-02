@@ -26,7 +26,7 @@ Demo: https://excessive-daphna-amcodes-bd8ff04d.koyeb.app/
   - MEN Folder (old version): PugJS instead of React.js
 
 📖 User Guide
- ** User Registration and Authentication
+  ** User Registration and Authentication
     - Registration:
         1- Navigate to the registration page.
         2- Fill in the required fields.
@@ -40,7 +40,7 @@ Demo: https://excessive-daphna-amcodes-bd8ff04d.koyeb.app/
         1- Navigate to the login page and click on “Forgot Password”.
         2- Enter your registered email address and click “Submit”.
         3- Check your email for a password reset link and follow the instructions to reset your password.
-
+        
   ** User Roles and Permissions
     - Author: Can create content, submit for review, and delete comments on their content.
     - Editor: Can review and approve/reject content, add new content directly, and delete comments on any content.
