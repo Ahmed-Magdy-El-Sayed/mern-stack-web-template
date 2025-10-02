@@ -26,20 +26,20 @@ Demo: https://excessive-daphna-amcodes-bd8ff04d.koyeb.app/
   - MEN Folder (old version): PugJS instead of React.js
 
 📖 User Guide
- - User Registration and Authentication
-    ** Registration:
-      Navigate to the registration page.
-      Fill in the required fields.
-      Click the "Signup" button, the browser will navigate you to the verification page.
-      Check your email for a verification code message and click on it to verify your account.
+ ** User Registration and Authentication
+    - Registration:
+        1- Navigate to the registration page.
+        2- Fill in the required fields.
+        3- Click the "Signup" button, the browser will navigate you to the verification page.
+        4- Check your email for a verification code message and click on it to verify your account.
     - Email Verification:
-      After registration, an email will be sent to the provided email address.
-      Copy the verification code and paste it into the verification page. 
-      Click the "Verify" button.  
+        1- After registration, an email will be sent to the provided email address.
+        2- Copy the verification code and paste it into the verification page. 
+        3- Click the "Verify" button.  
     - Password Recovery: 
-      Navigate to the login page and click on “Forgot Password”.
-      Enter your registered email address and click “Submit”.
-      Check your email for a password reset link and follow the instructions to reset your password.
+        1- Navigate to the login page and click on “Forgot Password”.
+        2- Enter your registered email address and click “Submit”.
+        3- Check your email for a password reset link and follow the instructions to reset your password.
 
   ** User Roles and Permissions
     - Author: Can create content, submit for review, and delete comments on their content.
