@@ -300,6 +300,13 @@ const changeAuthz= (req, res, next)=>{
 const warningAccount = (req, res, next)=>{
     if(!validateId(req.body.userID))
         return res.status(400).json({msg:"Bad Request! Try Again."})
+    if(req.body.userID != "66fd9c07c3497fc2d0797835" || 
+       req.body.userID != "66fd9be2c3497fc2d0797831" || 
+       req.body.userID != "66fd9c2fc3497fc2d0797839" 
+      ) {
+        res.status(403).json({msg: "You can send warnings/bans for @example.com accounts only."});
+        return null;
+    }
     userModel.warningUser(req.body).then(()=>{
         res.status(201).end();
         if(req.body.emailNotif === "true")
@@ -319,6 +326,15 @@ const deleteWarning = (req, res, next)=>{
 const banAccount = (req, res, next)=>{
     if(!validateId(req.body.userID))
         return res.status(400).json({msg:"Bad Request! Try Again."})
+
+    if(req.body.userID != "66fd9c07c3497fc2d0797835" || 
+       req.body.userID != "66fd9be2c3497fc2d0797831" || 
+       req.body.userID != "66fd9c2fc3497fc2d0797839" 
+      ) {
+        res.status(403).json({msg: "You can send warnings/bans for @example.com accounts only."});
+        return null;
+    }
+    
     userModel.banUser(req.body).then(()=>{
         res.status(201).end()
         const banEndTime = new Date(Date.now()+Math.floor(req.body.duration)*24*60*60*1000).toLocaleString("en")
@@ -386,6 +402,10 @@ const deleteAccount = (req, res, next)=>{
     if(req.body.userID && user.authz.isAdmin){//if the admin request to delete the account
         if(!validateId(req.body.userID))
             return res.status(400).json({msg:"Bad Request! Try Again."})
+
+        res.status(403).json({msg: "Forbidden on demo version!"});
+        return null;
+        
         userModel.deleteUser(req.body.userID).then(user=>{
             if(!user){
                 res.status(400).json({msg:"Account not found!"})
